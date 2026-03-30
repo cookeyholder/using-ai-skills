@@ -3,7 +3,7 @@ name: review-fix
 description: 全方位進行專案程式碼審查，產生詳細且清楚的審查報告，並根據報告自動建立 OpenSpec change 的所有提案文件，用來規劃並修復所有發現的問題。
 license: MIT
 metadata:
-    version: "1.1"
+    version: "1.2"
 ---
 
 # 全方位程式碼審查與 OpenSpec 修復提案自動化
@@ -92,3 +92,67 @@ python3 review-fix/scripts/bootstrap_review_fix.py --repo .
 ### 迭代停止條件（建議）
 
 避免無限循環，最多迭代 3 輪；若連續 2 輪無新增 P0/P1 問題，或僅剩 P3 非阻斷項，即可結束並彙整後續改善項目。
+
+## Subagent Orchestration（平行化審查與修復）
+
+當環境可使用 subagent 時，請優先採用以下編排，以縮短整體週期。
+
+### 階段 A：平行審查（Explorer）
+
+同時啟動 4 個 explorer，主責如下：
+
+- `security-explorer`：認證授權、輸入驗證、敏感資訊、注入風險。
+- `performance-explorer`：N+1、重複計算、I/O 熱點、快取策略。
+- `quality-explorer`：複雜度、重複邏輯、型別與可維護性。
+- `test-explorer`：測試覆蓋缺口、脆弱測試、CI 風險。
+
+每個 explorer 都必須輸出：
+
+- 依嚴重度排序的問題清單（含檔案與行號）。
+- 最多 3 個高價值修復建議（可落地、可驗證）。
+- 需要驗證的假設與潛在誤判。
+
+### 階段 B：集中整合（Main Agent）
+
+主 agent 負責：
+
+- 合併 4 份結果並去重。
+- 統一分級到 `P0/P1/P2/P3`。
+- 寫入單一 `docs/CODE_REVIEW_REPORT.md`。
+- 產出一個 OpenSpec change（避免一輪多 change 造成分散）。
+
+### 階段 C：平行修復（Worker）
+
+依模組切分 ownership 後，啟動多個 worker 平行修復。每位 worker 必須：
+
+- 僅修改分配到的檔案範圍，避免跨區衝突。
+- 同步補測試（或更新既有測試）。
+- 回報實際變更檔案、驗證方式、剩餘風險。
+
+主 agent 最後統一執行全域測試與回歸確認。
+
+### 協作規範
+
+- 禁止不同 worker 修改同一檔案（除非主 agent 明確排程）。
+- 若發現 blocker，worker 先回報，不自行擴大改動邊界。
+- 主 agent 不重做 explorer 的分析工作，只做整合與裁決。
+
+### 建議提示詞模板
+
+Explorer 模板：
+
+```text
+你是 {domain} explorer。請只做審查，不要改碼。
+輸出：
+1) Findings（含檔案:行號，依嚴重度排序）
+2) Top 3 修復建議（含驗證方法）
+3) 不確定假設與需要人工確認項目
+```
+
+Worker 模板：
+
+```text
+你是 {module} worker，負責檔案範圍：{owned_files}。
+你不是唯一在此 repo 工作的 agent，不可回退他人變更。
+目標：修復指定 findings，補齊必要測試，回報變更檔案與測試結果。
+```
