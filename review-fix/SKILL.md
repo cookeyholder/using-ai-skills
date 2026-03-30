@@ -3,7 +3,7 @@ name: review-fix
 description: 全方位進行專案程式碼審查，產生詳細且清楚的審查報告，並根據報告自動建立 OpenSpec change 的所有提案文件，用來規劃並修復所有發現的問題。
 license: MIT
 metadata:
-    version: "1.0"
+    version: "1.1"
 ---
 
 # 全方位程式碼審查與 OpenSpec 修復提案自動化
@@ -73,3 +73,22 @@ metadata:
 1. `docs/CODE_REVIEW_REPORT.md`（及其迭代版本）已產生，並簡述盤點與修復的核心問題。
 2. 已歷經多少次的自動循環修復，並且專案已達標 Clean Code 與效能要求。
 3. `README.md` 與 `docs/` 相關文件已經同步更新完畢。
+
+## 效率強化：快速啟動腳本 (Bootstrap Script)
+
+為了降低重複工，先執行以下腳本自動產生審查骨架與 OpenSpec 指令清單，再進入人工審查與修復：
+
+```bash
+python3 review-fix/scripts/bootstrap_review_fix.py --repo .
+```
+
+常用參數：
+
+- `--change-name <name>`：指定 OpenSpec change 名稱。
+- `--report-out <path>`：指定報告輸出位置（預設 `docs/CODE_REVIEW_REPORT.md`）。
+- `--plan-out <path>`：指定 OpenSpec 計畫輸出位置（預設 `docs/OPENSPEC_REVIEW_FIX_PLAN.md`）。
+- `--print-only`：僅輸出內容，不寫入檔案。
+
+### 迭代停止條件（建議）
+
+避免無限循環，最多迭代 3 輪；若連續 2 輪無新增 P0/P1 問題，或僅剩 P3 非阻斷項，即可結束並彙整後續改善項目。
