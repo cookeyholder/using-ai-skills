@@ -3,7 +3,7 @@ name: review-fix
 description: 全方位進行專案程式碼審查，產生詳細且清楚的審查報告，並根據報告自動建立 OpenSpec change 的所有提案文件，用來規劃並修復所有發現的問題。
 license: MIT
 metadata:
-    version: "1.2"
+    version: "1.5"
 ---
 
 # 全方位程式碼審查與 OpenSpec 修復提案自動化
@@ -28,7 +28,8 @@ metadata:
 3. **產出審查報告：**
     - 將所有發現的問題彙整，建立一份結構清晰、詳細的 Markdown 文件。
     - 為每個問題標示優先級別（例如：`P0_CRITICAL` 致命, `P1_HIGH` 嚴重, `P2_MEDIUM` 中等, `P3_LOW` 輕微）。
-    - 將詳細的審查報告儲存至專案目錄的 `docs/CODE_REVIEW_REPORT.md`（若是後續的迭代審查，則附加在原報告後方或建立新版本的報告，例如 `docs/CODE_REVIEW_REPORT_v2.md`）。
+    - **報告全文必須使用「臺灣慣用語」的繁體中文撰寫**（包含標題、內文、建議與結論；避免簡體中文與中國慣用詞）。
+    - 將詳細的審查報告儲存至專案目錄的 `docs/CODE_REVIEW_REPORT.md`。若有迭代版本，最終必須回寫整併至同一主檔（詳見「階段四：文件整理與合併」）。
 
 ## 階段二：建立 OpenSpec 修復提案 (OpenSpec Change Creation)
 
@@ -63,8 +64,62 @@ metadata:
 7. **更新專案文件 (Update Documentation)**：當該循環的程式碼變更與審查完全通過（即再也找不到 P0-P3 問題），且所有測試均 PASS 後，**必須**盤點受影響的業務邏輯、配置或 API 介面，並相應地自動更新：
     - 專案根目錄的 `README.md`。
     - 專案內 `docs/` 資料夾（或其他專用文件資料夾）中的相關文件與架構圖說明，確保文件與最新的程式碼實作保持絕對一致。
-8. **移除中間版本文件 (Remove Intermediate Versions)**：在最終確認專案已達到 Clean Code 與效能要求，且所有文件已更新完畢後，**可以選擇性地將中間版本的審查報告與提案文件（如 `CODE_REVIEW_REPORT_v2.md`、`fixes-iteration-2` 等）進行整理或歸檔**，以保持專案文件的整潔與可讀性。
+    - 若修補結果有「值得提醒使用者」的操作、安全、部署或相容性注意事項，**必須**寫入現有文件（例如 README 或對應 `docs/*`），不得只留在對話訊息中。
+    - 文件更新時，**必須同步移除或改寫過時內容**，避免新舊規範並存造成誤導。
+8. **移除中間版本文件 (Remove Intermediate Versions)**：在最終確認專案已達到 Clean Code 與效能要求，且所有文件已更新完畢後，**必須**將中間版本的審查報告與提案文件（如 `CODE_REVIEW_REPORT_v2.md`、`fixes-iteration-2` 等）整理、合併並歸檔，避免 `docs/` 留下多份同名或版本尾碼文件。
 9. **歸檔中間產生的迭代修復 OpenSpec Change (Archive OpenSpec Change)**：當確認該系列的修復任務已完全結束，且專案已達到預期的品質標準後，**請執行 `openspec archive change "<change-name>"` 來正式歸檔該 OpenSpec change**，並在 CHANGELOG.md 中記錄此次修復的核心內容與影響。
+
+## 階段四：文件整理與合併 (Documentation Consolidation - Mandatory)
+
+在 review-fix 全流程結束後，**必須**執行以下文件整併步驟，確保 `docs/` 不殘留重複檔：
+
+1. **掃描重複與版本化檔案：**
+    - 找出 `docs/` 下與審查流程相關的重複 Markdown，例如：
+      - `CODE_REVIEW_REPORT*.md`
+      - `OPENSPEC_REVIEW_FIX_PLAN*.md`
+      - 其他 review-fix 產生且僅差版本尾碼/日期尾碼的同名檔案
+2. **合併內容到主檔（Canonical Files）：**
+    - 將所有有效內容依時間序整併去重後，覆寫回：
+      - `docs/CODE_REVIEW_REPORT.md`
+      - `docs/OPENSPEC_REVIEW_FIX_PLAN.md`
+    - 去重原則：
+      - 相同 finding（同檔案+行號+問題描述）只保留一份，狀態以最新為準
+      - 任務/計畫項目以最新完成狀態為準
+3. **清理中間檔：**
+    - 已整併來源檔案不得留在 `docs/` 根目錄。
+    - 可刪除或移至 `docs/archive/review-fix/`（建議包含日期資料夾）。
+4. **最終一致性檢查：**
+    - `docs/` 根目錄中，審查主檔僅保留一份 canonical 檔名。
+    - 最終回報需列出：
+      - 合併了哪些檔案
+      - 移除/歸檔了哪些檔案
+      - canonical 檔案最終路徑
+
+## 階段五：Git 分支與高頻提交 (Git Workflow - Mandatory)
+
+在修復流程中，**必須**遵守以下 Git 工作規範：
+
+1. **先建立修復分支：**
+    - 在開始實作前，先從目前分支切出專用修復分支（例如：`review-fix/<change-name>`）。
+    - 分支名稱需可追溯本輪 review-fix change。
+
+2. **高頻提交（Small-Batch Commits）：**
+    - 每完成一個小階段就立即提交，不可累積大量變更才一次提交。
+    - 小階段範例：  
+      - 完成一個漏洞修補  
+      - 完成一組對應測試  
+      - 完成一份 OpenSpec artifact  
+      - 完成一輪文件整併
+    - 每次 commit 訊息需清楚描述該小階段目的與影響範圍。
+
+3. **提交順序建議：**
+    - `fix:` 漏洞修補
+    - `test:` 測試補強
+    - `docs:` 報告與文件同步
+    - `chore:` 文件整併/歸檔與收尾
+
+4. **最終狀態：**
+    - 在文件整理合併完成後，應有一組可閱讀的 commit 歷史，能清楚追溯每個修復階段。
 
 ## 輸出回報 (Output)
 
@@ -73,6 +128,16 @@ metadata:
 1. `docs/CODE_REVIEW_REPORT.md`（及其迭代版本）已產生，並簡述盤點與修復的核心問題。
 2. 已歷經多少次的自動循環修復，並且專案已達標 Clean Code 與效能要求。
 3. `README.md` 與 `docs/` 相關文件已經同步更新完畢。
+3.1 若有重要提醒事項，已寫入對應文件且可被長期追蹤。
+4. 已完成 `docs/` 重複 Markdown 的整併，並說明 canonical 檔案與歸檔位置。
+5. 已完成分支建立與高頻提交摘要（列出關鍵 commit 階段）。
+6. 已列出本輪「新增提醒內容」與「移除/改寫的過時內容」清單。
+
+## PR 收尾動作 (Mandatory)
+
+當上述流程全部完成（含文件整併與最終 commit）後，**必須主動詢問使用者是否要發起 PR**，再進行後續 PR 建立動作。
+
+另外，若需產生或更新 `docs/CODE_REVIEW_REPORT.md`（含迭代版本），其內容同樣必須維持「臺灣慣用語」的繁體中文一致性。
 
 ## 效率強化：快速啟動腳本 (Bootstrap Script)
 

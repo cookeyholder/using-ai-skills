@@ -17,14 +17,14 @@ from typing import Iterable, List, Tuple
 
 RISK_PATTERNS = [
     (
-        "Hardcoded secret-like string",
+        "疑似硬編碼機密字串",
         r"(AKIA[0-9A-Z]{16}|api[_-]?key\s*[:=]|secret\s*[:=]|password\s*[:=])",
     ),
-    ("Potential SQL string interpolation", r"SELECT\s+.+\{.+\}|f\"SELECT\s"),
-    ("JS eval / Function constructor", r"\beval\s*\(|new\s+Function\s*\("),
-    ("Python subprocess shell=True", r"subprocess\.(run|Popen)\(.+shell\s*=\s*True"),
+    ("可能的 SQL 字串插值風險", r"SELECT\s+.+\{.+\}|f\"SELECT\s"),
+    ("JS eval / Function 建構子風險", r"\beval\s*\(|new\s+Function\s*\("),
+    ("Python subprocess 使用 shell=True", r"subprocess\.(run|Popen)\(.+shell\s*=\s*True"),
     (
-        "Broad exception handling",
+        "過於寬鬆的例外處理",
         r"except\s+Exception\b|catch\s*\(\s*e\s*\)\s*\{",
     ),
 ]
@@ -107,7 +107,7 @@ def build_report(
     ext_lines = "\n".join([f"- `{ext}`: {count}" for ext, count in ext_counts]) or "- (No tracked files found)"
 
     risk_table = [
-        "| Signal | Matches | Sample |",
+        "| 風險訊號 | 命中數 | 範例 |",
         "|---|---:|---|",
     ]
     for signal, count, samples in risk_findings:
@@ -121,44 +121,46 @@ def build_report(
         f"openspec instructions tasks --change \"{change_name}\"",
     ]
 
-    return f"""# CODE_REVIEW_REPORT
+    return f"""# 程式碼審查報告
 
-## Metadata
-- Generated at: {now}
-- Repo: `{repo}`
-- Branch: `{branch or 'unknown'}`
-- Head: `{head or 'unknown'}`
-- Proposed OpenSpec change: `{change_name}`
+> 語言規範：本報告必須使用「臺灣慣用語」的繁體中文撰寫（避免簡體中文與中國慣用詞）。
 
-## Scope Snapshot
-### Top File Extensions
+## 基本資訊
+- 產生時間：{now}
+- 專案路徑：`{repo}`
+- 分支：`{branch or 'unknown'}`
+- 版本：`{head or 'unknown'}`
+- 建議的 OpenSpec change：`{change_name}`
+
+## 範圍快照
+### 主要副檔名分布
 {ext_lines}
 
-### Automated Risk Signals (Quick Scan)
+### 自動化風險訊號（快速掃描）
 {'\n'.join(risk_table)}
 
-## Findings
+## 審查發現
 
 ### P0_CRITICAL
-- (Add critical findings here)
+- （填入致命等級問題）
 
 ### P1_HIGH
-- (Add high-priority findings here)
+- （填入高優先問題）
 
 ### P2_MEDIUM
-- (Add medium-priority findings here)
+- （填入中優先問題）
 
 ### P3_LOW
-- (Add low-priority findings here)
+- （填入低優先問題）
 
-## Proposed Fix Plan
-- (Map each finding to specific files/modules)
-- (Define acceptance criteria and test scope)
+## 修復規劃
+- （將每個問題對應到具體檔案或模組）
+- （定義驗收標準與測試範圍）
 
-## Open Questions
-- (List uncertain assumptions that require confirmation)
+## 待確認事項
+- （列出需要進一步確認的假設與不確定點）
 
-## OpenSpec Command Checklist
+## OpenSpec 指令清單
 ```bash
 {"\n".join(openspec_cmds)}
 ```
