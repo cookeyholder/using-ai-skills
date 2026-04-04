@@ -17,14 +17,14 @@ from typing import Any
 
 def load_css_classes(snapshots_dir: Path) -> dict[str, Any]:
     """載入 CSS 類別掃描結果"""
-    css_file = snapshots_dir / 'snapshot_css_classes.json'
+    css_file = snapshots_dir / "snapshot_css_classes.json"
 
     if not css_file.exists():
         print(f"錯誤: 找不到 CSS 類別檔案: {css_file}", file=sys.stderr)
         print("請先執行快照生成以建立 CSS 類別檔案", file=sys.stderr)
         sys.exit(1)
 
-    with css_file.open('r', encoding='utf-8') as f:
+    with css_file.open("r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -32,20 +32,20 @@ def search_class(
     data: dict[str, Any],
     pattern: str,
     use_regex: bool = False,
-    custom_only: bool = False
+    custom_only: bool = False,
 ) -> dict[str, list[str]]:
     """搜尋 CSS 類別"""
     results = {}
 
     # 決定要搜尋的類別類型
     if custom_only:
-        search_categories = {'custom_classes': data.get('custom_classes', {})}
+        search_categories = {"custom_classes": data.get("custom_classes", {})}
     else:
         search_categories = {
-            'bootstrap_classes': data.get('bootstrap_classes', {}),
-            'tailwind_classes': data.get('tailwind_classes', {}),
-            'bootstrap_icons': data.get('bootstrap_icons', {}),
-            'custom_classes': data.get('custom_classes', {}),
+            "bootstrap_classes": data.get("bootstrap_classes", {}),
+            "tailwind_classes": data.get("tailwind_classes", {}),
+            "bootstrap_icons": data.get("bootstrap_icons", {}),
+            "custom_classes": data.get("custom_classes", {}),
         }
 
     # 編譯正則表達式
@@ -121,7 +121,7 @@ def display_results(results: dict[str, list[str]], pattern: str) -> None:
 def main():
     """主程式進入點"""
     parser = argparse.ArgumentParser(
-        description='獨立的 CSS 類別搜尋工具',
+        description="獨立的 CSS 類別搜尋工具",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 範例：
@@ -139,39 +139,24 @@ def main():
 
   # JSON 格式輸出
   python standalone_find_class.py btn --json
-        """
+        """,
     )
 
+    parser.add_argument("pattern", type=str, help="要搜尋的 CSS 類別名稱或模式")
+
     parser.add_argument(
-        'pattern',
+        "-s",
+        "--snapshots",
         type=str,
-        help='要搜尋的 CSS 類別名稱或模式'
+        default="snapshots",
+        help="快照目錄路徑（預設: snapshots）",
     )
 
-    parser.add_argument(
-        '-s', '--snapshots',
-        type=str,
-        default='snapshots',
-        help='快照目錄路徑（預設: snapshots）'
-    )
+    parser.add_argument("--regex", action="store_true", help="使用正則表達式搜尋")
 
-    parser.add_argument(
-        '--regex',
-        action='store_true',
-        help='使用正則表達式搜尋'
-    )
+    parser.add_argument("--custom-only", action="store_true", help="僅搜尋自訂類別")
 
-    parser.add_argument(
-        '--custom-only',
-        action='store_true',
-        help='僅搜尋自訂類別'
-    )
-
-    parser.add_argument(
-        '--json',
-        action='store_true',
-        help='以 JSON 格式輸出結果'
-    )
+    parser.add_argument("--json", action="store_true", help="以 JSON 格式輸出結果")
 
     args = parser.parse_args()
 
@@ -186,10 +171,7 @@ def main():
 
         # 搜尋
         results = search_class(
-            data,
-            args.pattern,
-            use_regex=args.regex,
-            custom_only=args.custom_only
+            data, args.pattern, use_regex=args.regex, custom_only=args.custom_only
         )
 
         # 輸出結果
@@ -207,9 +189,10 @@ def main():
     except Exception as e:
         print(f"\n錯誤: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

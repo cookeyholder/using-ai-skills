@@ -148,7 +148,9 @@ def update_marketplace_json(
     if not isinstance(plugins, list):
         raise ValueError(f"{marketplace_path} field 'plugins' must be an array.")
 
-    new_entry = build_marketplace_entry(plugin_name, install_policy, auth_policy, category)
+    new_entry = build_marketplace_entry(
+        plugin_name, install_policy, auth_policy, category
+    )
 
     for index, entry in enumerate(plugins):
         if isinstance(entry, dict) and entry.get("name") == plugin_name:
@@ -196,12 +198,24 @@ def parse_args() -> argparse.Namespace:
             "When using a home-rooted marketplace, use <home>/plugins."
         ),
     )
-    parser.add_argument("--with-skills", action="store_true", help="Create skills/ directory")
-    parser.add_argument("--with-hooks", action="store_true", help="Create hooks/ directory")
-    parser.add_argument("--with-scripts", action="store_true", help="Create scripts/ directory")
-    parser.add_argument("--with-assets", action="store_true", help="Create assets/ directory")
-    parser.add_argument("--with-mcp", action="store_true", help="Create .mcp.json placeholder")
-    parser.add_argument("--with-apps", action="store_true", help="Create .app.json placeholder")
+    parser.add_argument(
+        "--with-skills", action="store_true", help="Create skills/ directory"
+    )
+    parser.add_argument(
+        "--with-hooks", action="store_true", help="Create hooks/ directory"
+    )
+    parser.add_argument(
+        "--with-scripts", action="store_true", help="Create scripts/ directory"
+    )
+    parser.add_argument(
+        "--with-assets", action="store_true", help="Create assets/ directory"
+    )
+    parser.add_argument(
+        "--with-mcp", action="store_true", help="Create .mcp.json placeholder"
+    )
+    parser.add_argument(
+        "--with-apps", action="store_true", help="Create .app.json placeholder"
+    )
     parser.add_argument(
         "--with-marketplace",
         action="store_true",
@@ -245,10 +259,12 @@ def main() -> None:
     raw_plugin_name = args.plugin_name
     plugin_name = normalize_plugin_name(raw_plugin_name)
     if plugin_name != raw_plugin_name:
-        print(f"Note: Normalized plugin name from '{raw_plugin_name}' to '{plugin_name}'.")
+        print(
+            f"Note: Normalized plugin name from '{raw_plugin_name}' to '{plugin_name}'."
+        )
     validate_plugin_name(plugin_name)
 
-    plugin_root = (Path(args.path).expanduser().resolve() / plugin_name)
+    plugin_root = Path(args.path).expanduser().resolve() / plugin_name
     plugin_root.mkdir(parents=True, exist_ok=True)
 
     plugin_json_path = plugin_root / ".codex-plugin" / "plugin.json"

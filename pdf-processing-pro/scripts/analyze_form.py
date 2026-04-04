@@ -30,8 +30,7 @@ except ImportError:
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -46,48 +45,48 @@ class FormField:
     @property
     def field_type(self) -> str:
         """Get field type."""
-        ft = self.raw_data.get('/FT', '')
+        ft = self.raw_data.get("/FT", "")
         type_map = {
-            '/Tx': 'text',
-            '/Btn': 'button',  # checkbox or radio
-            '/Ch': 'choice',   # dropdown or list
-            '/Sig': 'signature'
+            "/Tx": "text",
+            "/Btn": "button",  # checkbox or radio
+            "/Ch": "choice",  # dropdown or list
+            "/Sig": "signature",
         }
-        return type_map.get(ft, 'unknown')
+        return type_map.get(ft, "unknown")
 
     @property
     def value(self) -> Optional[str]:
         """Get current field value."""
-        val = self.raw_data.get('/V')
+        val = self.raw_data.get("/V")
         return str(val) if val else None
 
     @property
     def default_value(self) -> Optional[str]:
         """Get default field value."""
-        dv = self.raw_data.get('/DV')
+        dv = self.raw_data.get("/DV")
         return str(dv) if dv else None
 
     @property
     def is_required(self) -> bool:
         """Check if field is required."""
-        flags = self.raw_data.get('/Ff', 0)
+        flags = self.raw_data.get("/Ff", 0)
         # Bit 2 indicates required
         return bool(flags & 2)
 
     @property
     def is_readonly(self) -> bool:
         """Check if field is read-only."""
-        flags = self.raw_data.get('/Ff', 0)
+        flags = self.raw_data.get("/Ff", 0)
         # Bit 1 indicates read-only
         return bool(flags & 1)
 
     @property
     def options(self) -> List[str]:
         """Get options for choice fields."""
-        if self.field_type != 'choice':
+        if self.field_type != "choice":
             return []
 
-        opts = self.raw_data.get('/Opt', [])
+        opts = self.raw_data.get("/Opt", [])
         if isinstance(opts, list):
             return [str(opt) for opt in opts]
         return []
@@ -95,44 +94,44 @@ class FormField:
     @property
     def max_length(self) -> Optional[int]:
         """Get max length for text fields."""
-        if self.field_type == 'text':
-            return self.raw_data.get('/MaxLen')
+        if self.field_type == "text":
+            return self.raw_data.get("/MaxLen")
         return None
 
     @property
     def rect(self) -> Optional[List[float]]:
         """Get field position and size [x0, y0, x1, y1]."""
-        return self.raw_data.get('/Rect')
+        return self.raw_data.get("/Rect")
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         result = {
-            'name': self.name,
-            'type': self.field_type,
-            'required': self.is_required,
-            'readonly': self.is_readonly
+            "name": self.name,
+            "type": self.field_type,
+            "required": self.is_required,
+            "readonly": self.is_readonly,
         }
 
         if self.value is not None:
-            result['value'] = self.value
+            result["value"] = self.value
 
         if self.default_value is not None:
-            result['default_value'] = self.default_value
+            result["default_value"] = self.default_value
 
         if self.options:
-            result['options'] = self.options
+            result["options"] = self.options
 
         if self.max_length is not None:
-            result['max_length'] = self.max_length
+            result["max_length"] = self.max_length
 
         if self.rect:
-            result['position'] = {
-                'x0': float(self.rect[0]),
-                'y0': float(self.rect[1]),
-                'x1': float(self.rect[2]),
-                'y1': float(self.rect[3]),
-                'width': float(self.rect[2] - self.rect[0]),
-                'height': float(self.rect[3] - self.rect[1])
+            result["position"] = {
+                "x0": float(self.rect[0]),
+                "y0": float(self.rect[1]),
+                "x1": float(self.rect[2]),
+                "y1": float(self.rect[3]),
+                "width": float(self.rect[2] - self.rect[0]),
+                "height": float(self.rect[3] - self.rect[1]),
             }
 
         return result
@@ -156,7 +155,7 @@ class PDFFormAnalyzer:
             logger.error(f"Not a file: {self.pdf_path}")
             raise ValueError(f"Not a file: {self.pdf_path}")
 
-        if self.pdf_path.suffix.lower() != '.pdf':
+        if self.pdf_path.suffix.lower() != ".pdf":
             logger.error(f"Not a PDF file: {self.pdf_path}")
             raise ValueError(f"Not a PDF file: {self.pdf_path}")
 
@@ -206,29 +205,31 @@ class PDFFormAnalyzer:
         fields = self.analyze()
 
         summary = {
-            'total_fields': len(fields),
-            'field_types': {},
-            'required_fields': [],
-            'readonly_fields': [],
-            'fields_with_values': []
+            "total_fields": len(fields),
+            "field_types": {},
+            "required_fields": [],
+            "readonly_fields": [],
+            "fields_with_values": [],
         }
 
         for field_name, field_data in fields.items():
             # Count by type
-            field_type = field_data['type']
-            summary['field_types'][field_type] = summary['field_types'].get(field_type, 0) + 1
+            field_type = field_data["type"]
+            summary["field_types"][field_type] = (
+                summary["field_types"].get(field_type, 0) + 1
+            )
 
             # Required fields
-            if field_data.get('required'):
-                summary['required_fields'].append(field_name)
+            if field_data.get("required"):
+                summary["required_fields"].append(field_name)
 
             # Read-only fields
-            if field_data.get('readonly'):
-                summary['readonly_fields'].append(field_name)
+            if field_data.get("readonly"):
+                summary["readonly_fields"].append(field_name)
 
             # Fields with values
-            if field_data.get('value'):
-                summary['fields_with_values'].append(field_name)
+            if field_data.get("value"):
+                summary["fields_with_values"].append(field_name)
 
         return summary
 
@@ -236,9 +237,9 @@ class PDFFormAnalyzer:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description='Analyze PDF form fields',
+        description="Analyze PDF form fields",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='''
+        epilog="""
 Examples:
   %(prog)s form.pdf
   %(prog)s form.pdf --output fields.json
@@ -250,13 +251,15 @@ Exit codes:
   1 - File not found
   2 - Invalid PDF
   3 - Processing error
-        '''
+        """,
     )
 
-    parser.add_argument('input', help='Input PDF file')
-    parser.add_argument('--output', '-o', help='Output JSON file (default: stdout)')
-    parser.add_argument('--summary', '-s', action='store_true', help='Show summary only')
-    parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
+    parser.add_argument("input", help="Input PDF file")
+    parser.add_argument("--output", "-o", help="Output JSON file (default: stdout)")
+    parser.add_argument(
+        "--summary", "-s", action="store_true", help="Show summary only"
+    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
@@ -279,7 +282,7 @@ Exit codes:
         json_output = json.dumps(result, indent=2)
 
         if args.output:
-            with open(args.output, 'w', encoding='utf-8') as f:
+            with open(args.output, "w", encoding="utf-8") as f:
                 f.write(json_output)
             logger.info(f"Saved to {args.output}")
         else:
@@ -299,9 +302,10 @@ Exit codes:
         logger.error(f"Error: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 3
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

@@ -22,7 +22,10 @@ RISK_PATTERNS = [
     ),
     ("可能的 SQL 字串插值風險", r"SELECT\s+.+\{.+\}|f\"SELECT\s"),
     ("JS eval / Function 建構子風險", r"\beval\s*\(|new\s+Function\s*\("),
-    ("Python subprocess 使用 shell=True", r"subprocess\.(run|Popen)\(.+shell\s*=\s*True"),
+    (
+        "Python subprocess 使用 shell=True",
+        r"subprocess\.(run|Popen)\(.+shell\s*=\s*True",
+    ),
     (
         "過於寬鬆的例外處理",
         r"except\s+Exception\b|catch\s*\(\s*e\s*\)\s*\{",
@@ -61,7 +64,9 @@ def count_extensions(files: Iterable[pathlib.Path]) -> List[Tuple[str, int]]:
 
 def rg_exists() -> bool:
     return (
-        subprocess.run(["which", "rg"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
+        subprocess.run(
+            ["which", "rg"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        ).returncode
         == 0
     )
 
@@ -104,7 +109,10 @@ def build_report(
 ) -> str:
     now = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    ext_lines = "\n".join([f"- `{ext}`: {count}" for ext, count in ext_counts]) or "- (No tracked files found)"
+    ext_lines = (
+        "\n".join([f"- `{ext}`: {count}" for ext, count in ext_counts])
+        or "- (No tracked files found)"
+    )
 
     risk_table = [
         "| 風險訊號 | 命中數 | 範例 |",
@@ -115,10 +123,10 @@ def build_report(
         risk_table.append(f"| {signal} | {count} | {sample} |")
 
     openspec_cmds = [
-        f"openspec new change \"{change_name}\"",
-        f"openspec instructions proposal --change \"{change_name}\"",
-        f"openspec instructions design --change \"{change_name}\"",
-        f"openspec instructions tasks --change \"{change_name}\"",
+        f'openspec new change "{change_name}"',
+        f'openspec instructions proposal --change "{change_name}"',
+        f'openspec instructions design --change "{change_name}"',
+        f'openspec instructions tasks --change "{change_name}"',
     ]
 
     return f"""# 程式碼審查報告
@@ -128,8 +136,8 @@ def build_report(
 ## 基本資訊
 - 產生時間：{now}
 - 專案路徑：`{repo}`
-- 分支：`{branch or 'unknown'}`
-- 版本：`{head or 'unknown'}`
+- 分支：`{branch or "unknown"}`
+- 版本：`{head or "unknown"}`
 - 建議的 OpenSpec change：`{change_name}`
 
 ## 範圍快照
@@ -137,7 +145,7 @@ def build_report(
 {ext_lines}
 
 ### 自動化風險訊號（快速掃描）
-{'\n'.join(risk_table)}
+{"\n".join(risk_table)}
 
 ## 審查發現
 
@@ -233,7 +241,9 @@ def main() -> int:
         count, samples = scan_pattern(repo, pattern)
         risk_findings.append((signal, count, samples))
 
-    report = build_report(repo, branch, head, ext_counts, risk_findings, args.change_name)
+    report = build_report(
+        repo, branch, head, ext_counts, risk_findings, args.change_name
+    )
     plan = build_openspec_plan(args.change_name)
 
     if args.print_only:
@@ -250,7 +260,9 @@ def main() -> int:
 
     print(f"[ok] Wrote report template: {report_out}")
     print(f"[ok] Wrote OpenSpec plan: {plan_out}")
-    print("[next] Fill findings, then run OpenSpec commands from the generated checklist.")
+    print(
+        "[next] Fill findings, then run OpenSpec commands from the generated checklist."
+    )
     return 0
 
 
