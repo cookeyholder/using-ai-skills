@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires GitHub CLI (gh) and the review-pr skill logic.
 metadata:
   author: local
-  version: "1.0"
+  version: "1.1"
 ---
 
 Run `review-pr` three times with 10-minute intervals between runs.
@@ -26,6 +26,12 @@ If omitted, infer from current branch using the same rule as `review-pr`.
   - collect actionable review comments
   - check CI status and inspect failed logs if needed
   - implement fixes
+  - check for conflicting files before commit/push:
+    ```bash
+    git diff --name-only --diff-filter=U
+    rg -n "^(<<<<<<<|=======|>>>>>>>)" .
+    ```
+    - if conflicts are found, resolve all conflicting files first
   - push changes
   - re-check PR status
 - Announce: `Round i/3 done` with concise summary.
@@ -47,9 +53,11 @@ Provide a final summary including:
 - commits created per round (if any)
 - latest review status
 - latest CI status
+- conflict-file check results by round
 - remaining blockers (if any)
 
 ## Guardrails
 - Use the same PR for all 3 rounds.
 - If no actionable feedback and CI is green in a round, still continue to next scheduled round.
+- Conflict-file checks are mandatory before each round's commit/push.
 - If hard-blocked (permission/network/tool outage), report immediately and stop.

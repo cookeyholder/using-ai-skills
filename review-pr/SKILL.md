@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires GitHub CLI (gh).
 metadata:
   author: local
-  version: "1.1"
+  version: "1.2"
 ---
 
 Review a Pull Request, collect actionable review feedback, check CI status, implement fixes, run `review-fix` validation, then commit and push updates.
@@ -55,13 +55,22 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
    - Keep changes minimal and aligned with PR scope
    - Run relevant checks/tests for touched areas
 
-5. **Run `review-fix` before commit/push (mandatory)**
+5. **Check for conflicting files before commit/push (mandatory)**
+   Run both checks:
+   ```bash
+   git diff --name-only --diff-filter=U
+   rg -n "^(<<<<<<<|=======|>>>>>>>)" .
+   ```
+   - If either command reports conflicts, stop and resolve all conflicting files first.
+   - Do not run commit/push until conflict output is empty.
+
+6. **Run `review-fix` before commit/push (mandatory)**
    - After coding fixes are done, run one `review-fix` pass on the updated workspace.
    - If `review-fix` finds additional issues, implement the required follow-up fixes first.
    - Repeat until there are no unresolved actionable findings from this validation pass.
    - Do not commit or push before this step is complete.
 
-6. **Commit, push, and re-verify PR**
+7. **Commit, push, and re-verify PR**
    ```bash
    git add -A
    git commit -m "<clear message for the fixes>"
@@ -74,10 +83,11 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
    ```
    - If checks fail again, continue log-driven fixes until green or blocked.
 
-7. **Report outcome**
+8. **Report outcome**
    Summarize:
    - Which review items were fixed
    - Which CI failures were fixed
+   - Conflict-file check result
    - `review-fix` validation result and any extra issues it caught
    - Commits added
    - Current checks/review state
@@ -88,4 +98,5 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
 - If a review comment is unclear or conflicts with spec/requirements, pause and ask user.
 - If there are no actionable review comments, still check CI and fix CI failures if present.
 - If review is clean and CI is green, explicitly state no action is needed.
+- Conflict-file checks are required before every commit/push in this workflow.
 - `review-fix` validation is required before every commit/push in this workflow.
