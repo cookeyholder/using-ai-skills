@@ -1,0 +1,4 @@
+interface:
+  display_name: "Open PR"
+  short_description: "建立 PR 並以臺灣繁體撰寫詳盡內容，完成後自動追蹤"
+  default_prompt: "Use open-pr to create a GitHub Pull Request in Traditional Chinese and then run review-pr-3x with the created PR number."
