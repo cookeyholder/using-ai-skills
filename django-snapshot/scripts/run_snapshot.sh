@@ -17,30 +17,48 @@ NC='\033[0m' # No Color
 
 # 函數：顯示使用說明
 show_usage() {
-    echo -e "${BLUE}Django Snapshot Skill - 獨立版本${NC}"
+    echo -e "${BLUE}Django Snapshot Skill - 增強版 v2.1${NC}"
     echo ""
     echo "用法: $0 [命令] [選項]"
     echo ""
     echo "命令:"
-    echo "  generate        生成專案快照（預設）"
-    echo "  status          顯示遷移狀態"
-    echo "  find <class>    搜尋 CSS 類別"
-    echo "  scan-css        掃描 CSS 類別"
-    echo "  help            顯示此說明"
+    echo "  generate              生成專案快照（預設）"
+    echo "  status                顯示遷移狀態"
+    echo "  find <class>          搜尋 CSS 類別"
+    echo "  scan-css              掃描 CSS 類別"
+    echo "  search <pattern>      全文搜尋原始碼與模板"
+    echo "  url-refs              分析 URL name 引用情況"
+    echo "  template-deps         分析模板繼承與依賴關係"
+    echo "  help                  顯示此說明"
     echo ""
-    echo "選項:"
-    echo "  -p, --project   專案目錄路徑（預設: 當前目錄）"
-    echo "  -o, --output    輸出目錄路徑（預設: snapshots）"
-    echo "  --regex         使用正則表達式搜尋"
-    echo "  --custom-only   僅搜尋自訂類別"
-    echo "  --json          以 JSON 格式輸出"
-    echo "  --list          顯示詳細列表"
+    echo "選項 (generate):"
+    echo "  -p, --project         專案目錄路徑（預設: 當前目錄）"
+    echo "  -o, --output          輸出目錄路徑（預設: snapshots）"
+    echo ""
+    echo "選項 (search):"
+    echo "  --regex               使用正則表達式"
+    echo "  --include <glob>      檔案篩選（例：*.py、*.html）"
+    echo "  --app <name>          只搜尋特定 app"
+    echo "  --context <N>         顯示前後 N 行"
+    echo "  --case-sensitive      區分大小寫"
+    echo ""
+    echo "選項 (url-refs):"
+    echo "  --list                列出所有 URL names"
+    echo "  --url <name>          分析特定 URL name"
+    echo "  --unused              列出未被引用的 URL"
+    echo ""
+    echo "選項 (template-deps):"
+    echo "  --template <name>     分析特定模板"
+    echo "  --tree                顯示繼承樹"
+    echo "  --orphans             列出未被引用的模板"
+    echo "  --summary             顯示統計摘要"
     echo ""
     echo "範例:"
     echo "  $0 generate"
-    echo "  $0 status"
+    echo "  $0 search 'LoginRequired' --regex --app accounts"
+    echo "  $0 url-refs --unused"
+    echo "  $0 template-deps --tree"
     echo "  $0 find btn"
-    echo "  $0 scan-css"
 }
 
 # 函數：執行獨立 Python 腳本
@@ -124,6 +142,31 @@ case $COMMAND in
             -s "$SNAPSHOTS_DIR/snapshot_templates.json" \
             -o "$SNAPSHOTS_DIR/snapshot_css_classes.json" \
             -v
+        ;;
+
+    help|--help|-h)
+        show_usage
+        ;;
+
+    search)
+        if [ -z "$1" ]; then
+            echo -e "${RED}❌ 錯誤: 請指定搜尋字串${NC}"
+            echo "用法: $0 search <pattern> [--regex] [--include *.py] [--app <name>] [--context N]"
+            exit 1
+        fi
+        echo -e "${GREEN}🔎 全文搜尋: $1${NC}"
+        run_standalone_script "standalone_search.py" -p "$PROJECT_ROOT" "$@"
+        ;;
+
+    url-refs)
+        echo -e "${GREEN}🔗 分析 URL 引用...${NC}"
+        SNAPSHOTS_DIR="${PROJECT_ROOT}/snapshots"
+        run_standalone_script "standalone_url_refs.py" -p "$PROJECT_ROOT" -s "$SNAPSHOTS_DIR" "$@"
+        ;;
+
+    template-deps)
+        echo -e "${GREEN}🌲 分析模板依賴...${NC}"
+        run_standalone_script "standalone_template_deps.py" -p "$PROJECT_ROOT" "$@"
         ;;
 
     help|--help|-h)

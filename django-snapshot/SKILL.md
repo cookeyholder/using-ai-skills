@@ -1,11 +1,128 @@
 ---
 name: django-snapshot
-description: 自動掃描 Django 專案結構、追蹤 CSS 框架使用，並提供智能建議。支援 Bootstrap 5 和 Tailwind CSS 雙框架掃描，用於開發新功能前了解專案架構，或追蹤 CSS 遷移進度。
+description: 自動掃描 Django 專案結構、追蹤 CSS 框架使用，並提供全文搜尋、URL 引用分析、模板依賴分析等進階功能。完全不依賴 Django 環境，使用 Python AST 靜態解析，功能等同 django-vibe-snapshot PyPI 套件。
 ---
 
 這個 skill 能掃描和分析 Django 專案，生成結構化的 JSON 快照，幫助 AI 快速理解專案架構並提供精準的開發建議。
 
-**新增 Tailwind CSS 支援** - 現在可以同時掃描 Bootstrap 5 和 Tailwind CSS 類別，支援響應式前綴（sm:, md:, lg:, xl:, 2xl:）和狀態變體（hover:, focus:, active: 等）。
+**v2.1 重大升級** - 使用 Python AST 靜態解析取代 Django runtime，新增全文搜尋、URL 引用分析、模板依賴分析等功能，與 `django-vibe-snapshot` PyPI 套件功能完全對等。
+
+## 使用時機
+
+當遇到以下情況時，自動或手動執行此 skill：
+
+1. **開發新功能前** - 需要了解最新的專案結構
+2. **進行代碼審查** - 確認代碼符合架構標準
+3. **重構專案** - 需要全面了解現有結構
+4. **不確定專案架構** - AI 需要準確的專案資訊來回答問題
+5. **搜尋特定模式** - 跨 app 搜尋 class/function/template 標籤
+6. **分析 URL 引用** - 找出未被引用或引用斷開的 URL names
+7. **模板重構前** - 分析 extends/include 依賴鏈，避免破壞性修改
+
+## 🤖 AI Agent 運作指引
+
+1. **執行生成**：執行 `./.github/skills/django-snapshot/scripts/run_snapshot.sh generate`
+2. **主動讀取**：生成後讀取 `snapshots/snapshot_index.json` 取得概覽，再依需求讀取各 JSON 檔案
+3. **整合資訊**：將快照資訊與任務結合，提供基於真實架構的建議
+
+## 快速開始
+
+```bash
+# 生成完整快照（不需要 Django 環境）
+./.github/skills/django-snapshot/scripts/run_snapshot.sh generate
+
+# 全文搜尋
+./.github/skills/django-snapshot/scripts/run_snapshot.sh search "LoginRequired" --regex --app accounts
+
+# 分析 URL 引用
+./.github/skills/django-snapshot/scripts/run_snapshot.sh url-refs --unused
+
+# 分析模板依賴
+./.github/skills/django-snapshot/scripts/run_snapshot.sh template-deps --tree
+
+# 搜尋 CSS 類別
+./.github/skills/django-snapshot/scripts/run_snapshot.sh find "btn"
+```
+
+## 所有命令
+
+| 命令 | 說明 |
+|------|------|
+| `generate` | 生成完整專案快照（9 個 JSON 檔案） |
+| `status` | 顯示 CSS 遷移狀態 |
+| `search <pattern>` | 全文搜尋原始碼與模板 |
+| `url-refs` | 分析 URL name 引用情況 |
+| `template-deps` | 分析模板繼承與 include 依賴 |
+| `find <class>` | 搜尋 CSS 類別 |
+| `scan-css` | 掃描 CSS 類別（詳細） |
+| `help` | 顯示說明 |
+
+## 腳本架構
+
+```
+.github/skills/django-snapshot/scripts/
+├── standalone_snapshot.py       - 快照生成器（AST 靜態解析，v2.1）
+├── standalone_search.py         - 全文搜尋工具（新增）
+├── standalone_url_refs.py       - URL 引用分析工具（新增）
+├── standalone_template_deps.py  - 模板依賴分析工具（新增）
+├── standalone_migration_status.py - 遷移狀態查看器
+├── standalone_find_class.py     - CSS 類別搜尋工具
+├── css_scanner.py               - CSS 類別掃描器
+├── generate_migration_status.py - 遷移狀態生成器
+├── migration_tracker.py         - 遷移追蹤器
+└── run_snapshot.sh              - 統一執行介面
+```
+
+## 輸出檔案（generate 命令）
+
+| 檔案 | 說明 |
+|------|------|
+| `snapshot_index.json` | 版本資訊、統計摘要 |
+| `snapshot_apps.json` | Django Apps 設定與屬性 |
+| `snapshot_models.json` | Models 欄位、類型、關聯（AST 解析） |
+| `snapshot_views.json` | Views 繼承鏈、Mixins、Permissions |
+| `snapshot_urls.json` | URL patterns、namespace、name |
+| `snapshot_templates.json` | 模板 extends/includes/blocks/url_tags |
+| `snapshot_forms.json` | Forms Meta class、explicit fields |
+| `snapshot_imports.json` | Per-module import 依賴圖 |
+| `snapshot_static_assets.json` | {% static %} 資產使用統計 |
+| `snapshot_cross_references.json` | 跨 app 引用關係 |
+
+## 技術細節
+
+### AST 靜態解析（核心架構）
+
+v2.1 完全使用 Python `ast` 模組靜態解析，**不需啟動 Django**：
+
+- **Models**：提取欄位名稱、類型、`max_length`/`related_model` 等關鍵屬性
+- **Views**：提取 CBV 繼承鏈、Mixins、decorators、permission_classes
+- **URLs**：解析 `urlpatterns` 的 `path()`/`re_path()` 呼叫（不用 Django resolver）
+- **Forms**：提取 `Meta.model`、`Meta.fields`、explicit field 定義
+- **Imports**：per-module 追蹤 `import` 和 `from...import`
+
+### 功能對照（與 django-vibe-snapshot 比較）
+
+| 功能 | django-vibe-snapshot | django-snapshot skill v2.1 |
+|------|---------------------|---------------------------|
+| Models 掃描 | ✅ runtime | ✅ AST 靜態解析 |
+| Views 掃描 | ✅ runtime | ✅ AST 靜態解析 |
+| URLs 掃描 | ✅ Django resolver | ✅ AST 靜態解析（限直接 path()） |
+| Templates 掃描 | ✅ | ✅ 含 blocks/url_tags |
+| Forms 掃描 | ✅ | ✅ AST Meta class |
+| Imports 追蹤 | ✅ | ✅ per-module |
+| Static assets | ✅ | ✅ {% static %} 統計 |
+| Cross references | ✅ | ✅ |
+| 全文搜尋 | ✅ `snapshot_search` | ✅ `standalone_search.py` |
+| URL 引用分析 | ✅ `snapshot_url_refs` | ✅ `standalone_url_refs.py` |
+| 模板依賴分析 | ✅ `snapshot_template_deps` | ✅ `standalone_template_deps.py` |
+| **需要 Django 環境** | **是** | **否** |
+
+## 版本資訊
+
+- **版本**: 2.1.0
+- **相容性**: Python 3.9+，不依賴任何第三方套件
+- **升級亮點**: AST 靜態解析、3 個新輔助腳本、功能與 django-vibe-snapshot 對等
+
 
 ## 使用時機
 
