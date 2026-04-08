@@ -1,5 +1,5 @@
 ---
-name: pr-squash-merge-main
+name: squash-pr
 description: Check PR has no new review feedback, squash merge to main, then update local main.
 license: MIT
 compatibility: Requires GitHub CLI (gh) and git.
