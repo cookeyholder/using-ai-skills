@@ -3,7 +3,7 @@ name: refactor-django
 description: 任意 Django 專案的波浪式重構工作流程。當使用者想要提升測試覆蓋率、從 Fat View 抽取 Service 層、拆解 Fat Model、解耦 Django signals、修復技術債、整備 type hints / mypy、設定 pre-commit 工具鏈、或需要一套安全且可追蹤的重構計畫時使用。觸發詞：refactor、重構、service 層抽取、測試覆蓋率提升、fat view、fat model、技術債清理、clean code、service layer、安全網測試、Django 重構、type hints。
 license: MIT
 metadata:
-    version: "1.1"
+    version: "1.2"
 ---
 
 # Django 波浪式重構工作流程
@@ -32,6 +32,7 @@ metadata:
 [4] Wave 2 Service  → 有安全網後，才搬移 View/Model 邏輯
 [5] Wave 3 補覆蓋率 → 其餘 App 補足測試至 ≥85%
 [6] Wave 4 強制門檻 → CI 加入 --cov-fail-under=85
+[7] Wave Final 收尾 → 全部子提案 merge 後，彙整遲到 review 意見再開一個改善 PR
 ```
 
 ---
@@ -622,8 +623,32 @@ def test_email_service_retries_on_smtp_error(user_factory):
 [6] 解決 review 留言 → push
 [7] gh pr merge --squash
 [8] git checkout main && git pull
-[9] openspec-archive-change
+[9] openspec-archive-change（子提案歸檔）
 ```
+
+> 上述節奏適用於「單一子提案 PR」。
+
+## 全部子提案完成後：收尾彙整 PR（必做）
+
+即使每個子提案都跑過 `review-pr-3x`，仍可能有**延遲出現**的審查意見。  
+因此在「所有子提案都已 squash merge」後，必須再開一個收尾 PR，集中補齊漏掉的改善項。
+
+```
+[A] 確認所有子提案 PR 都已 squash merge 到 main
+[B] 逐一回看所有子提案 PR：Review、Conversation、line comments、CI annotations
+[C] 建立「未落地審查意見清單」：意見來源 PR、連結、風險、預計修法
+[D] 實作所有漏網改善（可含測試補強、型別修正、命名/邊界一致性調整）
+[E] git push → open-pr（建立「收尾彙整改善 PR」）
+[F] review-pr-3x（再監看一次，確保收尾 PR 自身也乾淨）
+[G] gh pr merge --squash
+[H] git checkout main && git pull
+[I] openspec-archive-change（最後才歸檔父提案）
+```
+
+### 收尾彙整 PR 建議命名
+
+- Branch：`refactor-wave-final-review-followups`
+- PR Title：`refactor: 彙整修復子提案遺漏審查意見`
 
 ### Commit Message 規範
 
