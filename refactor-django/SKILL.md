@@ -161,16 +161,18 @@ User = get_user_model()
 class UserFactory(DjangoModelFactory):
     class Meta:
         model = User
-        username = factory.Sequence(lambda n: f"user_{n}")
-        email = factory.LazyAttribute(lambda o: f"{o.username}@example.com")
-        password = factory.PostGenerationMethodCall("set_password", "testpass123")
+
+    username = factory.Sequence(lambda n: f"user_{n}")
+    email = factory.LazyAttribute(lambda o: f"{o.username}@example.com")
+    password = factory.PostGenerationMethodCall("set_password", "testpass123")
 
 class ArticleFactory(DjangoModelFactory):
     class Meta:
         model = "blog.Article"
-        author = factory.SubFactory(UserFactory)   # FK
-        title = factory.Faker("sentence", nb_words=5)
-        body = factory.Faker("paragraphs", nb=3, as_text=True)
+
+    author = factory.SubFactory(UserFactory)   # FK
+    title = factory.Faker("sentence", nb_words=5)
+    body = factory.Faker("paragraphs", nb=3, as_text=True)
 
     class Params:
         published = factory.Trait(            # Trait：快速切換狀態
