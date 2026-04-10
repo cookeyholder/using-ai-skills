@@ -1,6 +1,6 @@
 ---
 name: refactor-django
-description: 任意 Django 專案的波浪式重構工作流程。當使用者想要提升測試覆蓋率、從 Fat View 抽取 Service 層、拆解 Fat Model、解耦 Django signals、修復技術債、整備 type hints / mypy、設定 pre-commit 工具鏈、或需要一套安全且可追蹤的重構計畫時使用。觸發詞：refactor、重構、service 層抽取、測試覆蓋率提升、fat view、fat model、技術債清理、clean code、service layer、安全網測試、Django 重構、type hints。
+description: 任意 Django 專案的波浪式重構工作流程。當使用者想要讓專案更好維護、程式碼更具可讀性、更容易測試、更 clean、提升測試覆蓋率、從 Fat View 抽取 Service 層、拆解 Fat Model、解耦 Django signals、修復技術債、整備 type hints / mypy、設定 pre-commit 工具鏈、或需要一套安全且可追蹤的重構計畫時使用。觸發詞：refactor、重構、service 層抽取、測試覆蓋率提升、fat view、fat model、技術債清理、clean code、service layer、安全網測試、Django 重構、type hints。
 license: MIT
 metadata:
     version: "1.2"
@@ -26,8 +26,8 @@ metadata:
 ## 整體流程概覽
 
 ```
-[1] 分析現況        → 覆蓋率報告 + Fat View/Model 識別
-[2] 規劃提案        → openspec-ff-change（父提案 + 子提案）
+[1] 分析現況        → 覆蓋率報告 + 使用 `django-snapshot` 和 `code-reviewer` skill 了解專案現況與識別 Fat View/Model
+[2] 規劃提案        → 使用 openspec-ff-change skill（父提案 + 子提案）
 [3] Wave 1 安全網   → 純新增測試，不動任何業務邏輯
 [4] Wave 2 Service  → 有安全網後，才搬移 View/Model 邏輯
 [5] Wave 3 補覆蓋率 → 其餘 App 補足測試至 ≥85%
@@ -55,7 +55,22 @@ pytest --cov=src --cov-report=html --cov-omit="*/migrations/*,manage.py"
 | views.py 行數    | > 300 行   | Fat View 候選，Wave 2 抽取 Service |
 | models.py 方法數 | > 15 個    | Fat Model 候選，評估邊界           |
 
-### 1.2 識別樣板 App
+
+### 1.2 使用 `django-snapshot` 和 `code-reviewer` skill 了解專案現況與識別 Fat View/Model
+    - 使用 `django-snapshot` 產生專案快照，了解有多少 view function、model method、signal、import 關係等
+    - 使用 `code-reviewer` skill 掃瞄專案程式碼 3 輪
+      - 第一輪：識別 Fat View/Model 拆解後的 Service 層
+      - 第二輪：識別出不夠 clean 的程式碼，以及不容易維護的程式碼
+      - 第三輪：識別具有資訊安全風險的程式碼
+    - 整理出專案現況報告，包含
+      - 專案結構
+      - 覆蓋率報告
+      - Fat View/Model 列表
+      - Signal 列表
+      - Import 關係圖
+      - 資訊安全風險報告
+
+### 1.3 識別樣板 App
 
 找出專案中**已有良好 Service 層**的 App 作為範本：
 
@@ -72,9 +87,18 @@ src/<reference_app>/
 
 ## Phase 2：建立 OpenSpec 提案
 
-使用 `review-fix` 和 `code-reviewer` 產生審查報告，再用 `openspec-ff-change` 建立波浪式計畫。
+- 使用前面所產生的專案現況報告，依照報告內容適當地分拆成數個部分，分別使用 `openspec-ff-change` 建立改善提案。
+- 用一個 parent 提案，管理前面所分拆的數個 child 提案，每個 child 提案負責一個單一的改善目標。
+- 每個改善提案不應該負責太複雜的邏輯，應該只負責一個單一的改善目標，例如
+    - 抽取單一 App 的 Service 層
+    - 拆解單一 App 的 Fat Model
+    - 重構不夠 clean 的程式碼
+    - 移除不再使用的程式碼
+    - 重構有資訊安全風險的程式碼
+    - 整備 Type Hints / mypy
+    - 設定 pre-commit 工具鏈
 
-### 父提案結構
+### parent 提案結構
 
 ```
 openspec/changes/<project>-refactor/
@@ -83,11 +107,28 @@ openspec/changes/<project>-refactor/
   tasks.md      # Wave 1-4 的 PR 清單（含依賴關係）
 ```
 
-### 子提案命名規則
+### parent 提案開發原則
+    - 採用 TDD 開發模式，專案整體的測試覆蓋率至少要達到 85%
+    - parent 提案的 `tasks.md` 應該包含所有的 child 提案，並依照 Wave 1-4 的順序排列，實作時也是按照這個順序一個一個實作。
+    - 每次要實作 child 提案時，要先建立一個開發用 branch，例如 `refactor-wave1-01-add-tests`，並將該 child 提案的 PR 建立在該 branch 上。
+    - 前一個 child 提案的 PR 必須完全合併到 main 分支以後，才能開始下一個 child 提案的實作，從已包含前一個 child 提案 PR 的 main 分支開始建立新分支。
+    - 最後一項 task 是從最早的 child 提案 PR 開始，重新一個一個檢查審查意見，把之前沒有改善的審查意見收集起來，集中在一個 PR 進行修補
+  
+### child 提案結構
+    - 每個 child 提案命名規則：`refactor-wave{N}-{NN}-{slug}`
+    - 每個 child 提案的 `tasks.md` 應該包含：
+      - 使用 `django-snapshot` skill 產生的快照
+      - 實作完的程式碼要用一個 sub-agent 利用 `code-reviewer` 和 `review-fix` skill 以最嚴格的標準掃描，確保沒有引入新的問題或者解決所有發現的問題
+      - 更新專案文件，包括 `README.md`、`docs/` 等
+    
 
-```
-refactor-wave{N}-{NN}-{slug}
-```
+### child 提案開發原則
+    - 採用 TDD 開發模式，測試覆蓋率至少要達到 85%
+    - 每次修改程式碼後，都要執行 `pytest` 確保測試通過
+    - 每次修改程式碼後，都要執行 `ruff` 和 `djLint` 工具檢查程式碼品質並排版
+    - 採用高頻提交策略，每完成一個 task 就提交一次，不要累積太多變更再提交
+    - 使用 `open-pr` skill 開啟 PR
+    - 使用 `review-pr-3x` skill 監控 PR，沒有發現新的審查意見或檔案衝突後，才使用 `squash-pr` skill 合併 PR
 
 ---
 
@@ -120,16 +161,16 @@ User = get_user_model()
 class UserFactory(DjangoModelFactory):
     class Meta:
         model = User
-    username = factory.Sequence(lambda n: f"user_{n}")
-    email = factory.LazyAttribute(lambda o: f"{o.username}@example.com")
-    password = factory.PostGenerationMethodCall("set_password", "testpass123")
+        username = factory.Sequence(lambda n: f"user_{n}")
+        email = factory.LazyAttribute(lambda o: f"{o.username}@example.com")
+        password = factory.PostGenerationMethodCall("set_password", "testpass123")
 
 class ArticleFactory(DjangoModelFactory):
     class Meta:
         model = "blog.Article"
-    author = factory.SubFactory(UserFactory)   # FK
-    title = factory.Faker("sentence", nb_words=5)
-    body = factory.Faker("paragraphs", nb=3, as_text=True)
+        author = factory.SubFactory(UserFactory)   # FK
+        title = factory.Faker("sentence", nb_words=5)
+        body = factory.Faker("paragraphs", nb=3, as_text=True)
 
     class Params:
         published = factory.Trait(            # Trait：快速切換狀態
