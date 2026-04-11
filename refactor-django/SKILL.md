@@ -113,14 +113,14 @@ openspec/changes/<project>-refactor/
     - 每次要實作 child 提案時，要先建立一個開發用 branch，例如 `refactor-wave1-01-add-tests`，並將該 child 提案的 PR 建立在該 branch 上。
     - 前一個 child 提案的 PR 必須完全合併到 main 分支以後，才能開始下一個 child 提案的實作，從已包含前一個 child 提案 PR 的 main 分支開始建立新分支。
     - 最後一項 task 是從最早的 child 提案 PR 開始，重新一個一個檢查審查意見，把之前沒有改善的審查意見收集起來，集中在一個 PR 進行修補
-  
+
 ### child 提案結構
     - 每個 child 提案命名規則：`refactor-wave{N}-{NN}-{slug}`
     - 每個 child 提案的 `tasks.md` 應該包含：
       - 使用 `django-snapshot` skill 產生的快照
       - 實作完的程式碼要用一個 sub-agent 利用 `code-reviewer` 和 `review-fix` skill 以最嚴格的標準掃描，確保沒有引入新的問題或者解決所有發現的問題
       - 更新專案文件，包括 `README.md`、`docs/` 等
-    
+
 
 ### child 提案開發原則
     - 採用 TDD 開發模式，測試覆蓋率至少要達到 85%
@@ -175,7 +175,7 @@ class ArticleFactory(DjangoModelFactory):
     body = factory.Faker("paragraphs", nb=3, as_text=True)
 
     class Params:
-        published = factory.Trait(            # Trait：快速切換狀態
+        published = factory.Trait(# Trait：快速切換狀態
             status="published",
             published_at=factory.Faker("past_datetime"),
         )
@@ -673,7 +673,7 @@ def test_email_service_retries_on_smtp_error(user_factory):
 
 ## 全部子提案完成後：收尾彙整 PR（必做）
 
-即使每個子提案都跑過 `review-pr-3x`，仍可能有**延遲出現**的審查意見。  
+即使每個子提案都跑過 `review-pr-3x`，仍可能有**延遲出現**的審查意見。
 因此在「所有子提案都已 squash merge」後，必須再開一個收尾 PR，集中補齊漏掉的改善項。
 
 ```
