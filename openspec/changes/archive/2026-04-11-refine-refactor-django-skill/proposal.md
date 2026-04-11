@@ -4,9 +4,9 @@
 
 ## What Changes
 
-- **架構重整**：將單一技能文件劃分為「核心流程管線 (Pipeline)」與「專家技術指南 (Expert Guide)」兩大部分。
-- **流程精確化**：將原本分散的 10 個 Phase 濃縮為 4 大 Wave（分析佈樁、實作重構、工具整備、收尾歸檔）。
-- **新增專家專題**：整合複雜相依處理（解耦 Signal/Circular Imports）、零停機遷移模式（Expand/Migrate/Contract）及回滾 SOP。
+- **架構重整**：將單一技能文件SHALL 劃分 (SHALL divide)為「核心流程管線 (Pipeline)」與「專家技術指南 (Expert Guide)」兩大部分。
+- **流程精確化**：將原本分散的 10 個 Phase SHALL 濃縮 (SHALL condense)為 4 大 Wave（分析佈樁、實作重構、工具整備、收尾歸檔）。
+- **新增專家專題**：SHALL 整合 (SHALL integrate)複雜相依處理（解耦 Signal/Circular Imports）、零停機遷移模式（Expand/Migrate/Contract）及回滾 SOP。
 - **範例精簡與修復**：修正 Factory 範例縮排並移除冗餘重複的代碼片段。
 
 ## Capabilities

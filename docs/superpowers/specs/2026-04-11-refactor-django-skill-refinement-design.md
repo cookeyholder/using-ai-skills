@@ -1,46 +1,46 @@
-# 2026-04-11 refactor-django Skill Refinement Design
+# 2026-04-11 refactor-django 技能精煉與優化設計
 
-## 1. Goal Description
-Refactor and simplify the `refactor-django/SKILL.md` file to improve readability and maintainability. The current file is too long (26KB+). The goal is to condense the core workflow while enriching it with expert-level tactical guidance on complex dependency decoupling, safe database migrations, and rollback SOPs.
+## 1. 目標說明
+重構並精簡 `refactor-django/SKILL.md` 檔案，以提升其可讀性與維護性。目前檔案體積過大（超過 26KB）。目標是在濃縮核心工作流程的同時，補強有關複雜相依解耦、資料庫安全遷移以及回滾 SOP 的專家級戰術指引。
 
-## 2. Approach: Core + Expert Guide
-We will reorganize the single `SKILL.md` file into two major logical sections:
-1.  **Core Refactor Pipeline**: A high-density, action-oriented workflow condensed into 4 Waves.
-2.  **Expert Tactical Guide**: A reference section for deep technical challenges (Dependencies, Migrations, Rollbacks).
+## 2. 核心方案：骨幹流程 + 專家指南
+我們將把單一的 `SKILL.md` 檔案重整為兩個主要的邏輯區塊：
+1.  **重構核心管線 (Core Refactor Pipeline)**：高密度、行動導線的工作流，濃縮為 4 個 Wave。
+2.  **專家戰術指南 (Expert Tactical Guide)**：針對深度技術挑戰（相依、遷移、回滾）的參考章節。
 
-## 3. Detailed Architecture
+## 3. 詳細架構設計
 
-### 3.1 File Structure Overhaul
-The file will be structured as follows:
-- **Navigation Table**: Quick links to all sections.
-- **Core Workflow (The "Pipeline")**: 
-    - Wave 1: Analysis & Safety Net (Snapshot + Unit Tests).
-    - Wave 2: Service Extraction & Model Cleanup (Implementation & Review-Fix).
-    - Wave 3: Toolchain & Type Hints (Mypy + Ruff + Celery).
-    - Wave 4: Consolidation & Archive (Final PRs).
-- **Expert Tactical Guide**:
-    - **T1: Dependency Decoupling**: Signal decoupling and circular import breakpoints.
-    - **T2: Zero-Downtime Migrations**: Expand/Migrate/Contract pattern.
-    - **T3: Rollback & Troubleshooting**: SOPs for deployment failure.
-- **Cheat Sheet & Templates**: Concise code snippets for common tasks.
+### 3.1 檔案結構重整
+檔案將依序包含以下章節：
+- **導航目錄**：跳轉至各個章節的快速連結。
+- **核心流程（管線）**：
+    - Wave 1：分析與安全網（Snapshot + 單元測試）。
+    - Wave 2：Service 抽取與 Model 清理（實作與 Review-Fix）。
+    - Wave 3：工具鏈與型別整備（Mypy + Ruff + Celery）。
+    - Wave 4：彙整與歸檔（最終 PRs）。
+- **專家戰術指南**：
+    - **T1：複雜相依解耦**：Signal 解耦與循環引用中斷策略。
+    - **T2：零停機資料庫遷移**：Expand/Migrate/Contract 模式。
+    - **T3：回滾與故障排除**：部署失敗時的標準作業程序 (SOP)。
+- **查檢表與模板**：常用任務的簡練程式碼片段。
 
-### 3.2 Simplification Strategy
-- Avoid long prose; use bullet points and checklist format (`- [ ]`).
-- Use Mermaid diagrams for workflow visualization.
-- Move redundant explanation of Wave implementation into a unified checklist.
+### 3.2 精簡策略
+- 避免長篇大論；優先使用項目符號與查檢表格式 (`- [ ]`)。
+- 使用 Mermaid 圖表進行流程視覺化。
+- 將 Wave 實作的重複說明合併為統一的查檢表。
 
-### 3.3 New Tactical Content
-- **Migrations**: Introduce the "Expand/Migrate/Contract" pattern for model refactoring.
-- **Dependencies**: Explicitly define using `services` as the only bridge between apps to avoid circular imports.
-- **Rollback**: Define "Data Compensation" commands vs "Git Revert" scenarios.
+### 3.3 新增戰術內容
+- **資料庫遷移**：導入「擴展/遷移/收縮 (Expand/Migrate/Contract)」模式進行 Model 重構。
+- **相依性**：明確定義以 `services` 作為 App 間唯一的通訊橋樑，避免循環引用。
+- **回滾**：定義「資料補償指令」相對於「Git Revert」的適用情境。
 
-## 4. Success Criteria
-- File size reduced significantly (target < 15KB).
-- Core workflow (Pipeline) can be read in under 2 minutes.
-- Inclusion of the three new Expert Tactical topics.
-- All Factory templates fixed (Indentation verified).
+## 4. 驗收標準
+- 檔案體積顯著縮減（目標 < 15KB）。
+- 核心流程（Pipeline）在 2 分鐘內即可閱讀完畢。
+- 包含上述三個新增的專家戰術專題。
+- 所有 Factory 模板修復完成（縮排已通過驗證）。
 
-## 5. Verification Plan
-- Manual audit of Markdown structure and internal links.
-- Verify readability and actionability of the 4 Waves.
-- Verify the technical correctness of the new Expert sections.
+## 5. 驗證計畫
+- 手動稽核 Markdown 結構與內部連結。
+- 驗證 4 大 Wave 的可讀性與行動導向性。
+- 驗證新增專家章節的技術正確性。
