@@ -1,6 +1,6 @@
 ---
 name: review-pr
-description: Read PR review comments, check CI status, implement fixes, and push updates.
+description: Read PR review comments, monitor CI with gh pr checks --watch, implement fixes, and push updates.
 license: MIT
 compatibility: Requires GitHub CLI (gh).
 metadata:
@@ -8,7 +8,7 @@ metadata:
   version: "1.2"
 ---
 
-Review a Pull Request, collect actionable review feedback, check CI status, implement fixes, run `review-fix` validation, then commit and push updates.
+Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run `review-fix` validation, then commit and push updates.
 
 **Input**: Optional PR number or URL (e.g., `review-pr 19`).
 If omitted, infer from current branch. If ambiguous, show candidate PRs and ask user to choose.
@@ -32,9 +32,9 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
    - Exclude pure summaries, non-actionable praise, and duplicate threads
    - Keep file/line context when available
 
-3. **Check CI status and failures**
+3. **Monitor CI status and failures**
    ```bash
-   gh pr checks <pr>
+   gh pr checks <pr> --watch
    gh run list --limit 10 --json databaseId,headBranch,status,conclusion,workflowName,createdAt
    ```
    - Determine if any required checks are failing/pending.
@@ -78,7 +78,7 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
    ```
    Then verify:
    ```bash
-   gh pr checks <pr>
+   gh pr checks <pr> --watch
    gh pr view <pr> --json reviewDecision,mergeStateStatus
    ```
    - If checks fail again, continue log-driven fixes until green or blocked.

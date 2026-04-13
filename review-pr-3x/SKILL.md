@@ -1,6 +1,6 @@
 ---
 name: review-pr-3x
-description: Run review-pr three times with a 10-minute interval.
+description: Run review-pr three times and monitor PR checks with gh pr checks --watch.
 license: MIT
 compatibility: Requires GitHub CLI (gh) and the review-pr skill logic.
 metadata:
@@ -24,7 +24,7 @@ If omitted, infer from current branch using the same rule as `review-pr`.
 - Announce: `Round i/3 start`.
 - Execute the full `review-pr` workflow for the same PR:
   - collect actionable review comments
-  - check CI status and inspect failed logs if needed
+  - monitor CI/check status using `gh pr checks <pr> --watch` and inspect failed logs if needed
   - implement fixes
   - check for conflicting files before commit/push:
     ```bash
@@ -33,7 +33,7 @@ If omitted, infer from current branch using the same rule as `review-pr`.
     ```
     - if conflicts are found, resolve all conflicting files first
   - push changes
-  - re-check PR status
+  - re-monitor PR status with `gh pr checks <pr> --watch`
 - Announce: `Round i/3 done` with concise summary.
 
 ## Interval
@@ -45,6 +45,13 @@ sleep 600
 ```
 
 During waiting, report that the command is intentionally paused for polling interval.
+If checks are still running/pending between rounds, use:
+
+```bash
+gh pr checks <pr> --watch
+```
+
+to monitor until completion before moving on.
 
 ## Completion Output
 
