@@ -1,6 +1,6 @@
 ---
 name: squash-pr
-description: Check PR has no new review feedback, squash merge to main, then update local main.
+description: Check PR has no new review feedback, squash merge to the PR's target branch, then update that local branch.
 license: MIT
 compatibility: Requires GitHub CLI (gh) and git.
 metadata:
@@ -8,7 +8,7 @@ metadata:
   version: "1.0"
 ---
 
-Use this skill when the user wants to finalize a PR by squashing into `main` after confirming there are no new review comments, then sync local `main`.
+Use this skill when the user wants to finalize a PR by squashing into the PR's target branch after confirming there are no new review comments, then sync the local target branch.
 
 ## Input
 - Optional PR number/URL (e.g., `17` or full PR URL)
@@ -25,7 +25,7 @@ gh pr view <pr> --json number,url,state,isDraft,headRefName,baseRefName,mergeSta
 Rules:
 - PR must be `OPEN`
 - PR must not be draft
-- base branch must be `main`
+- save `baseRefName` as `<target-branch>`; it may be any branch
 
 2. **Check for new review feedback**
 
@@ -45,7 +45,7 @@ Rules:
 - `mergeStateStatus` should allow merge (`CLEAN`/mergeable equivalent).
 - If checks are pending/failing, stop and report.
 
-4. **Squash merge to main**
+4. **Squash merge to the target branch**
 
 ```bash
 gh pr merge <pr> --squash --delete-branch
@@ -53,12 +53,12 @@ gh pr merge <pr> --squash --delete-branch
 
 - If merge fails, report the exact blocker.
 
-5. **Update local main**
+5. **Update local target branch**
 
 ```bash
 git fetch origin --prune
-git checkout main
-git pull --ff-only origin main
+git checkout <target-branch>
+git pull --ff-only origin <target-branch>
 ```
 
 6. **Report completion**
@@ -66,11 +66,11 @@ git pull --ff-only origin main
 Return:
 - PR number and URL
 - merge commit SHA
-- local `main` head commit
+- local target branch head commit
 - whether branch deletion succeeded
 
 ## Guardrails
 - Never merge if new actionable review feedback exists.
 - Never merge if required checks are failing/pending.
 - Do not use force push or destructive git commands.
-- If local workspace has conflicting uncommitted changes preventing checkout to `main`, stop and report.
+- If local workspace has conflicting uncommitted changes preventing checkout to the target branch, stop and report.
