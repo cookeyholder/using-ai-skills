@@ -1,0 +1,4 @@
+interface:
+  display_name: "OWASP Security Review"
+  short_description: "OWASP-based security code review for web apps"
+  default_prompt: "Review the codebase for OWASP Top 10 vulnerabilities and generate a detailed security report with findings and remediation guidance"
