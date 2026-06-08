@@ -58,8 +58,7 @@ Path(f"/data/{filename}").read_text()
 from pathlib import Path
 base = Path("/uploads").resolve()
 requested = (base / filename).resolve()
-if not str(requested).startswith(str(base)):
-    raise ValueError("Path traversal")
+requested.relative_to(base)  # Raises ValueError if not under base
 ```
 
 ### Hardcoded Secrets
@@ -246,7 +245,7 @@ http.ServeFile(w, r, filepath.Join("/uploads", fileName))
 
 // SAFE
 cleaned := filepath.Clean(fileName)
-basePath := filepath.Clean("/uploads")
+basePath := filepath.Clean("/uploads") + string(filepath.Separator)
 resolved := filepath.Join(basePath, cleaned)
 if !strings.HasPrefix(resolved, basePath) {
     http.Error(w, "Invalid path", 400)

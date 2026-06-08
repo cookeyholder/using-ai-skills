@@ -22,6 +22,8 @@ def get_invoice(user_id: str, invoice_id: str):
 @router.get("/api/invoices/{invoice_id}")
 def get_invoice(invoice_id: str, current_user=Depends(get_current_user)):
     invoice = db.invoices.find(invoice_id)
+    if not invoice:
+        raise HTTPException(404)
     if invoice.user_id != current_user.id:
         raise HTTPException(403)
     return invoice

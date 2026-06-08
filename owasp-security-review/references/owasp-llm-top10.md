@@ -58,9 +58,10 @@ context = "\n".join(doc.text for doc in docs)
 response = llm.generate(f"Context: {context}\nQuestion: {query}")
 
 # SAFE — output filtering + access-controlled RAG
-response = llm.generate(query)
-filtered = pii_scanner.scan(response)  # Redact emails, phones, SSNs
 docs = vector_store.search(query, filter={"access_level": user.clearance})
+context = "\n".join(doc.text for doc in docs)
+response = llm.generate(f"Context: {context}\nQuestion: {query}")
+filtered = pii_scanner.scan(response)  # Redact emails, phones, SSNs
 ```
 
 ### Validation Questions
