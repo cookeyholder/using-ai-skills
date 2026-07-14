@@ -10,6 +10,8 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import pathlib
+import re
+import shutil
 import subprocess
 import sys
 from collections import Counter
@@ -18,7 +20,7 @@ from typing import Iterable, List, Tuple
 RISK_PATTERNS = [
     (
         "疑似硬編碼機密字串",
-        r"(AKIA[0-9A-Z]{16}|(?<!# )(?:api[_-]?key\s*[:=]|secret\s*[:=]|password\s*[:=]))",
+        r"(AKIA[0-9A-Z]{16}|api[_-]?key\s*[:=]|secret\s*[:=]|password\s*[:=])",
     ),
     ("可能的 SQL 字串插值風險", r"SELECT\s+.+\{.+\}|f\"SELECT\s"),
     ("JS eval / Function 建構子風險", r"\beval\s*\(|new\s+Function\s*\("),
@@ -72,14 +74,12 @@ def count_extensions(files: Iterable[pathlib.Path]) -> List[Tuple[str, int]]:
 
 
 def rg_exists() -> bool:
-    return (
-        subprocess.run(
-            ["sh", "-c", "command -v rg"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        ).returncode
-        == 0
-    )
+    return shutil.which("rg") is not None
+
+
+def is_comment_line(line: str) -> bool:
+    content = line.split(":", 2)[2] if line.count(":") >= 2 else line
+    return bool(re.match(r"^\s*#", content))
 
 
 def scan_pattern(repo: pathlib.Path, pattern: str) -> Tuple[int, List[str]]:
@@ -108,7 +108,10 @@ def scan_pattern(repo: pathlib.Path, pattern: str) -> Tuple[int, List[str]]:
         print(f"[rg] error (exit={proc.returncode}): {proc.stderr.strip()}",
               file=sys.stderr)
         return 0, []
-    lines = [line for line in proc.stdout.splitlines() if line.strip()]
+    lines = [
+        line for line in proc.stdout.splitlines()
+        if line.strip() and not is_comment_line(line)
+    ]
     return len(lines), lines[:5]
 
 

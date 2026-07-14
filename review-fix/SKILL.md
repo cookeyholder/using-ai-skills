@@ -125,9 +125,9 @@ metadata:
 為了降低重複工，先執行以下腳本自動產生審查骨架與 OpenSpec 指令清單，再進入人工審查與修復：
 
 ```bash
-python3 "$(dirname "$(realpath "$0")")/scripts/bootstrap_review_fix.py" --repo .
+python3 "$(codegraph which review-fix)/scripts/bootstrap_review_fix.py" --repo .
 ```
-> **注意：** 上述路徑解析假設指令從 skill 根目錄執行。若 `codegraph` CLI 可用，可改用 `python3 "$(codegraph which review-fix)/scripts/bootstrap_review_fix.py" --repo .`。
+> **注意：** 若 `codegraph` CLI 不可用，請先 `cd` 至 skills 根目錄再執行相對路徑：`python3 review-fix/scripts/bootstrap_review_fix.py --repo .`。
 
 常用參數：
 
