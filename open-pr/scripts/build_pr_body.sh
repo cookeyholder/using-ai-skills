@@ -44,7 +44,7 @@ generate_issue_context() {
   fi
 }
 
-# List all top-level directories that have changes
+# 列出所有有變更的頂層目錄
 collect_top_dirs() {
   local files
   files=$(collect_changed_files)
@@ -54,7 +54,7 @@ collect_top_dirs() {
   done | sort -u | awk '{printf "%s%s",sep,$0; sep=", "} END{print ""}'
 }
 
-# Use git diff --name-status for efficient per-file status
+# 使用 git diff --name-status 一次取得所有檔案狀態，避免逐檔呼叫
 generate_change_items() {
   git diff --name-status "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" 2>/dev/null | while IFS=$'\t' read -r status file; do
     [[ -z "$file" ]] && continue
@@ -133,13 +133,13 @@ validate_template() {
 
   local errors=0
 
-  # Block literal \n (not actual newlines)
-  if rg -q '\\n' "$PR_BODY" 2>/dev/null; then
-    echo "❌ PR 內文含有字面反斜線 n，請改成實際換行"
+  # 檢查字面反斜線 n（不在反引號內的情況才算錯誤）
+  if rg -q '(?<![`])\\\\n(?![`])' "$PR_BODY" 2>/dev/null; then
+    echo "❌ PR 內文含有字面反斜線 n（不在反引號內），請改成實際換行"
     ((errors++))
   fi
 
-  # Block bare placeholders (not inside backticks) — must be filled
+  # 檢查未填寫的 placeholder（不在反引號內的「請填入」）
   if rg -q '(?<![`])請填入(?![`])' "$PR_BODY" 2>/dev/null; then
     echo "❌ 發現未填寫的欄位："
     rg -n '(?<![`])請填入(?![`])' "$PR_BODY" 2>/dev/null || true
@@ -147,7 +147,17 @@ validate_template() {
     ((errors++))
   fi
 
-  # Check for untracked files
+  # 檢查內部行話／非正式用詞
+  local jargon
+  jargon=$(rg -niw '裸' "$PR_BODY" 2>/dev/null || true)
+  if [[ -n "$jargon" ]]; then
+    echo "❌ 發現不妥用詞（內部行話，不應出現在 PR 正文）："
+    echo "$jargon"
+    echo "請改用完整、正式的敘述替代"
+    ((errors++))
+  fi
+
+  # 檢查未追蹤檔案
   local untracked
   untracked=$(git ls-files --others --exclude-standard 2>/dev/null || true)
   if [[ -n "$untracked" ]]; then
@@ -156,7 +166,7 @@ validate_template() {
     echo "若與本 PR 無關請加入 .gitignore"
   fi
 
-  # Check checkboxes
+  # 檢查 checkbox 數量
   local checkboxes
   checkboxes=$(rg -c '^\- \[ \]' "$PR_BODY" 2>/dev/null || true)
   if (( checkboxes < 2 )); then
