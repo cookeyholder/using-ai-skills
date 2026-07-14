@@ -10,6 +10,8 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import pathlib
+import re
+import shutil
 import subprocess
 import sys
 from collections import Counter
@@ -26,6 +28,9 @@ RISK_PATTERNS = [
         "Python subprocess 使用 shell=True",
         r"subprocess\.(run|Popen)\(.+shell\s*=\s*True",
     ),
+    # Note: except Exception also matches legitimate re-raise patterns
+    # (except Exception as e: log.error(...); raise) — these are false
+    # positives from this regex; manually filter them in review.
     (
         "過於寬鬆的例外處理",
         r"except\s+Exception\b|catch\s*\(\s*e\s*\)\s*\{",
@@ -43,15 +48,21 @@ def run(cmd: List[str], cwd: pathlib.Path) -> str:
         check=False,
     )
     if proc.returncode != 0:
+        print(f"[run] stderr: {proc.stderr.strip()}",
+              file=sys.stderr)
         return ""
     return proc.stdout.strip()
 
 
 def git_files(repo: pathlib.Path) -> List[pathlib.Path]:
-    out = run(["git", "ls-files"], repo)
-    if not out:
-        return []
-    return [repo / line for line in out.splitlines() if line.strip()]
+    tracked = run(["git", "ls-files"], repo)
+    untracked = run(["git", "ls-files", "--others", "--exclude-standard"], repo)
+    lines = []
+    if tracked:
+        lines.extend(tracked.splitlines())
+    if untracked:
+        lines.extend(untracked.splitlines())
+    return [repo / line for line in lines if line.strip()]
 
 
 def count_extensions(files: Iterable[pathlib.Path]) -> List[Tuple[str, int]]:
@@ -63,12 +74,12 @@ def count_extensions(files: Iterable[pathlib.Path]) -> List[Tuple[str, int]]:
 
 
 def rg_exists() -> bool:
-    return (
-        subprocess.run(
-            ["which", "rg"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        ).returncode
-        == 0
-    )
+    return shutil.which("rg") is not None
+
+
+def is_comment_line(line: str) -> bool:
+    content = line.split(":", 2)[2] if line.count(":") >= 2 else line
+    return bool(re.match(r"^\s*#", content))
 
 
 def scan_pattern(repo: pathlib.Path, pattern: str) -> Tuple[int, List[str]]:
@@ -94,9 +105,23 @@ def scan_pattern(repo: pathlib.Path, pattern: str) -> Tuple[int, List[str]]:
         check=False,
     )
     if proc.returncode not in (0, 1):
+        print(f"[rg] error (exit={proc.returncode}): {proc.stderr.strip()}",
+              file=sys.stderr)
         return 0, []
-    lines = [line for line in proc.stdout.splitlines() if line.strip()]
+    lines = [
+        line for line in proc.stdout.splitlines()
+        if line.strip() and not is_comment_line(line)
+    ]
     return len(lines), lines[:5]
+
+
+def openspec_commands(change_name: str) -> List[str]:
+    return [
+        f'openspec new change "{change_name}"',
+        f'openspec instructions proposal --change "{change_name}"',
+        f'openspec instructions design --change "{change_name}"',
+        f'openspec instructions tasks --change "{change_name}"',
+    ]
 
 
 def build_report(
@@ -122,12 +147,7 @@ def build_report(
         sample = "<br>".join(s.replace("|", "\\|") for s in samples) if samples else "-"
         risk_table.append(f"| {signal} | {count} | {sample} |")
 
-    openspec_cmds = [
-        f'openspec new change "{change_name}"',
-        f'openspec instructions proposal --change "{change_name}"',
-        f'openspec instructions design --change "{change_name}"',
-        f'openspec instructions tasks --change "{change_name}"',
-    ]
+    openspec_cmds = openspec_commands(change_name)
 
     return f"""# 程式碼審查報告
 
@@ -176,6 +196,8 @@ def build_report(
 
 
 def build_openspec_plan(change_name: str) -> str:
+    cmds = openspec_commands(change_name)
+    commands_block = "\n".join(cmds)
     return f"""# OpenSpec Review-Fix Plan
 
 ## Change
@@ -183,10 +205,7 @@ def build_openspec_plan(change_name: str) -> str:
 
 ## Commands
 ```bash
-openspec new change \"{change_name}\"
-openspec instructions proposal --change \"{change_name}\"
-openspec instructions design --change \"{change_name}\"
-openspec instructions tasks --change \"{change_name}\"
+{commands_block}
 ```
 
 ## Completion Gate

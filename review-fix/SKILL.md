@@ -3,7 +3,10 @@ name: review-fix
 description: 全方位進行專案程式碼審查，產生詳細且清楚的審查報告，並根據報告自動建立 OpenSpec change 的所有提案文件，用來規劃並修復所有發現的問題。
 license: MIT
 metadata:
-    version: "1.5"
+    version: "1.6"
+    # disable-model-invocation: true is intentionally omitted because
+    # other skills (review-pr, refactor-django, etc.) may trigger this
+    # skill via description matching when users request code reviews.
 ---
 
 # 全方位程式碼審查與 OpenSpec 修復提案自動化
@@ -27,7 +30,7 @@ metadata:
 
 3. **產出審查報告：**
     - 將所有發現的問題彙整，建立一份結構清晰、詳細的 Markdown 文件。
-    - 為每個問題標示優先級別（例如：`P0_CRITICAL` 致命, `P1_HIGH` 嚴重, `P2_MEDIUM` 中等, `P3_LOW` 輕微）。
+    - 為每個問題標示優先級別（例如：`P0_CRITICAL`, `P1_HIGH`, `P2_MEDIUM`, `P3_LOW`）。
     - **報告全文必須使用「臺灣慣用語」的繁體中文撰寫**（包含標題、內文、建議與結論；避免簡體中文與中國慣用詞）。
     - 將詳細的審查報告儲存至專案目錄的 `docs/CODE_REVIEW_REPORT.md`。若有迭代版本，最終必須回寫整併至同一主檔（詳見「階段四：文件整理與合併」）。
 
@@ -60,7 +63,7 @@ metadata:
 3. **建立新一輪提案：** 若發現新的問題、未完全修復的舊問題，或是不符合 Clean Code 與效能標準的實作，則產生新的審查報告，並自動建立下一輪的 OpenSpec change 修復任務（如 `fixes-iteration-2`），然後回到第 1 步繼續自動實作。
 4. **直到完美為止：** 此循環將持續自動進行，**直到確認專案內所有的程式碼皆以最安全、效能最佳、且符合 Clean Code 的方式重構和修復為止**。
 5. **對應與擴充測試 (Update & Add Tests)：** 由於新程式碼或架構的加入，原本的測試程式碼可能無法直接對接或覆蓋率不足。在更新文件前，**必須**調整現有測試或新增測試程式，確保所有測試皆與最新的程式碼行為一致。
-6. **確保測試綠燈 (Ensure Tests / CI Pass)：** **必須要執行並通過專案內所有的測試，或確認 CI 流程成功完成**，證明修復成果沒有破壞任何既有功能。
+6. **確保測試綠燈 (Ensure Tests / CI Pass)：** **必須要執行並通過專案內所有的測試，或確認 CI 流程成功完成**，證明修復成果沒有破壞任何既有功能。執行測試前，請先從專案設定檔自動發現測試指令（依序檢查 `package.json` → `pyproject.toml` → `Cargo.toml` → `Makefile`）。
 7. **更新專案文件 (Update Documentation)**：當該循環的程式碼變更與審查完全通過（即再也找不到 P0-P3 問題），且所有測試均 PASS 後，**必須**盤點受影響的業務邏輯、配置或 API 介面，並相應地自動更新：
     - 專案根目錄的 `README.md`。
     - 專案內 `docs/` 資料夾（或其他專用文件資料夾）中的相關文件與架構圖說明，確保文件與最新的程式碼實作保持絕對一致。
@@ -68,32 +71,10 @@ metadata:
     - 文件更新時，**必須同步移除或改寫過時內容**，避免新舊規範並存造成誤導。
 8. **移除中間版本文件 (Remove Intermediate Versions)**：在最終確認專案已達到 Clean Code 與效能要求，且所有文件已更新完畢後，**必須**將中間版本的審查報告與提案文件（如 `CODE_REVIEW_REPORT_v2.md`、`fixes-iteration-2` 等）整理、合併並歸檔，避免 `docs/` 留下多份同名或版本尾碼文件。
 9. **歸檔中間產生的迭代修復 OpenSpec Change (Archive OpenSpec Change)**：當確認該系列的修復任務已完全結束，且專案已達到預期的品質標準後，**請執行 `openspec archive change "<change-name>"` 來正式歸檔該 OpenSpec change**，並在 CHANGELOG.md 中記錄此次修復的核心內容與影響。
-
-## 階段四：文件整理與合併 (Documentation Consolidation - Mandatory)
-
-在 review-fix 全流程結束後，**必須**執行以下文件整併步驟，確保 `docs/` 不殘留重複檔：
-
-1. **掃描重複與版本化檔案：**
-    - 找出 `docs/` 下與審查流程相關的重複 Markdown，例如：
-      - `CODE_REVIEW_REPORT*.md`
-      - `OPENSPEC_REVIEW_FIX_PLAN*.md`
-      - 其他 review-fix 產生且僅差版本尾碼/日期尾碼的同名檔案
-2. **合併內容到主檔（Canonical Files）：**
-    - 將所有有效內容依時間序整併去重後，覆寫回：
-      - `docs/CODE_REVIEW_REPORT.md`
-      - `docs/OPENSPEC_REVIEW_FIX_PLAN.md`
-    - 去重原則：
-      - 相同 finding（同檔案+行號+問題描述）只保留一份，狀態以最新為準
-      - 任務/計畫項目以最新完成狀態為準
-3. **清理中間檔：**
-    - 已整併來源檔案不得留在 `docs/` 根目錄。
-    - 可刪除或移至 `docs/archive/review-fix/`（建議包含日期資料夾）。
-4. **最終一致性檢查：**
-    - `docs/` 根目錄中，審查主檔僅保留一份 canonical 檔名。
-    - 最終回報需列出：
-      - 合併了哪些檔案
-      - 移除/歸檔了哪些檔案
-      - canonical 檔案最終路徑
+10. **迭代停止條件：**
+    - 最多迭代 3 輪，避免無限循環。
+    - 若連續 2 輪無新增 P0/P1 問題，或僅剩 P3 非阻斷項，即可結束並彙整後續改善項目。
+11. **文件整理與合併 (Documentation Consolidation)：** 參考步驟 8 的「移除中間版本文件」規範，將 `docs/` 底下的重複與版本化審查檔案（如 `CODE_REVIEW_REPORT_v2.md`、`fixes-iteration-2` 等）整併至單一 canonical 檔案，並清理或歸檔中間檔至 `docs/archive/review-fix/`。確認 `docs/` 根目錄僅保留一份 canonical 檔案。
 
 ## 階段五：Git 分支與高頻提交 (Git Workflow - Mandatory)
 
@@ -144,8 +125,9 @@ metadata:
 為了降低重複工，先執行以下腳本自動產生審查骨架與 OpenSpec 指令清單，再進入人工審查與修復：
 
 ```bash
-python3 review-fix/scripts/bootstrap_review_fix.py --repo .
+python3 "$(codegraph which review-fix)/scripts/bootstrap_review_fix.py" --repo .
 ```
+> **注意：** 若 `codegraph` CLI 不可用，請先 `cd` 至 skills 根目錄再執行相對路徑：`python3 review-fix/scripts/bootstrap_review_fix.py --repo .`。
 
 常用參數：
 
@@ -153,10 +135,6 @@ python3 review-fix/scripts/bootstrap_review_fix.py --repo .
 - `--report-out <path>`：指定報告輸出位置（預設 `docs/CODE_REVIEW_REPORT.md`）。
 - `--plan-out <path>`：指定 OpenSpec 計畫輸出位置（預設 `docs/OPENSPEC_REVIEW_FIX_PLAN.md`）。
 - `--print-only`：僅輸出內容，不寫入檔案。
-
-### 迭代停止條件（建議）
-
-避免無限循環，最多迭代 3 輪；若連續 2 輪無新增 P0/P1 問題，或僅剩 P3 非阻斷項，即可結束並彙整後續改善項目。
 
 ## Subagent Orchestration（平行化審查與修復）
 
