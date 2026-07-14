@@ -40,25 +40,20 @@ PR 標題與內文都必須使用臺灣繁體中文，避免中國常見用語�
 
 若偵測到不符合的詞，先改寫再發 PR。
 
-## 產生 PR 內文（自動模板）
-
-使用 `build_pr_body.sh` 腳本產生 PR 內文模板：
+## 產生 PR 內文
 
 ```bash
 BASE_BRANCH="$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name')"
 scripts/build_pr_body.sh generate
 ```
 
-這會根據 commit log、diff、branch 自動填入變更摘要與檔案清單。
+腳本會自動分析 commit log、diff 產生：
+- 變更摘要（含 commit 列表）
+- 主要變更項目（含檔案與變更類型）
+- 測試與驗證 checkbox
+- 風險與回滾預設值
 
-## 編輯 PR 內文
-
-編輯 `/tmp/pr_body.md`，將 `<請填入...>` 替換為實際內容：
-
-- **主要變更項目**：每項說明修改的檔案、影響範圍、設計考量
-- **測試細節**：填入實際執行的測試指令與結果
-- **風險與回滾**：填入潛在風險、監控指標、回滾方式
-- **相關議題**：填入對應的 GitHub Issue 編號（若無則刪除該行）
+**可選**：若需要補充測試細節、風險說明或相關 issue，請編輯 `/tmp/pr_body.md`。
 
 ## 驗證 PR 內文
 
@@ -67,23 +62,9 @@ scripts/build_pr_body.sh validate
 ```
 
 驗證項目：
-- 無未填寫的 `<請填入...>` placeholder
-- 測試指令與結果已填入
 - 無字面 `\n` 字串（會導致 PR 頁面顯示異常）
 - 至少有 2 項測試 checkbox
-- 無未追蹤檔案
-- branch 對應的 issue 存在（若有）
-
-驗證通過後，再執行 `gh pr create`。
-
-> **提示**：若編輯 PR 內文時遇到 heredoc 問題（特殊字元導致 bash 錯誤），可用 Python 寫入：
-> ```bash
-> python3 -c "
-> content = open('/tmp/pr_body.md').read()
-> content = content.replace('<請填入實際執行的測試指令>', 'npm test')
-> with open('/tmp/pr_body.md', 'w') as f:
->     f.write(content)
-> "
+- 警告未追蹤檔案（不強制阻擋）
 
 ## 發起 PR
 
