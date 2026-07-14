@@ -11,11 +11,6 @@ collect_commits() {
   git log --pretty=format:'%s' -n 5 "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" 2>/dev/null || git log --pretty=format:'%s' -n 5
 }
 
-collect_diff_stats() {
-  git fetch origin "${BASE_BRANCH}" >/dev/null 2>&1 || true
-  git diff --stat "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" 2>/dev/null || git diff --stat "${BASE_BRANCH}..${CURRENT_BRANCH}"
-}
-
 collect_changed_files() {
   git fetch origin "${BASE_BRANCH}" >/dev/null 2>&1 || true
   git diff --name-only "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" 2>/dev/null || git diff --name-only "${BASE_BRANCH}..${CURRENT_BRANCH}"
@@ -49,68 +44,52 @@ generate_issue_context() {
   fi
 }
 
-# Find primary module by counting changed lines per directory
-find_primary_module() {
-  local diff_stats
-  diff_stats=$(collect_diff_stats)
-  
-  # Extract directory and line changes from diff --stat
-  # Format: " filename | 10 +++---"
-  echo "$diff_stats" | grep -E '^\s' | sed 's/^[[:space:]]*//' | while IFS='|' read -r file rest; do
-    file=$(echo "$file" | sed 's/[[:space:]]*$//')
-    dir=$(dirname "$file")
-    # Get the net change count (additions + deletions)
-    changes=$(echo "$rest" | grep -oE '[0-9]+[[:space:]]*\+' | grep -oE '[0-9]+' || echo "1")
-    echo "$changes $dir"
-  done | awk '
-    { 
-      count[$2] += $1 
-    } 
-    END { 
-      for (d in count) print count[d], d 
-    }
-  ' | sort -nr | head -n1 | awk '{print $2}'
+# List all top-level directories that have changes
+collect_top_dirs() {
+  local files
+  files=$(collect_changed_files)
+  echo "$files" | while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    echo "$f" | cut -d'/' -f1
+  done | sort -u | awk '{printf "%s%s",sep,$0; sep=", "} END{print ""}'
 }
 
-# Generate file change descriptions from diff
+# Use git diff --name-status for efficient per-file status
 generate_change_items() {
-  local files file dir
-  files=$(collect_changed_files)
-  
-  echo "$files" | while IFS= read -r file; do
+  git diff --name-status "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" 2>/dev/null | while IFS=$'\t' read -r status file; do
     [[ -z "$file" ]] && continue
     dir=$(dirname "$file")
     filename=$(basename "$file")
-    
-    # Determine change type from diff
-    local change_type="修改"
-    if git diff "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" -- "$file" 2>/dev/null | head -5 | grep -q '^+[^+]' && \
-       ! git diff "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" -- "$file" 2>/dev/null | grep -q '^-[^-]'; then
-      change_type="新增"
-    elif git diff "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" -- "$file" 2>/dev/null | grep -q '^-[^-]' && \
-         ! git diff "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" -- "$file" 2>/dev/null | grep -q '^+[^+]'; then
-      change_type="刪除"
-    fi
-    
+
+    case "$status" in
+      A) change_type="新增" ;;
+      D) change_type="刪除" ;;
+      M) change_type="修改" ;;
+      R*) change_type="重新命名" ;;
+      C*) change_type="複製" ;;
+      *) change_type="修改" ;;
+    esac
+
     printf -- '- **%s**：%s `%s`\n' "$dir" "$change_type" "$filename"
   done
 }
 
 generate_template() {
-  local commits keywords keyword_line issue_title primary_module change_items
+  local commits keywords keyword_line issue_title top_dirs change_items
   commits=$(collect_commits)
   keywords=$(generate_keywords "$commits")
   keyword_line=$(printf '%s' "$keywords" | paste -sd ', ' -)
   issue_title=$(generate_issue_context || true)
-  primary_module=$(find_primary_module || echo "多個模組")
+  top_dirs=$(collect_top_dirs)
+  [[ -z "$top_dirs" ]] && top_dirs="多個模組"
   change_items=$(generate_change_items)
-  
+
   mkdir -p "$(dirname "$PR_BODY")"
 
   {
     printf '## 變更摘要\n'
-    printf -- '- 本次 PR 主要變更 %s 相關內容\n' "$primary_module"
-    printf -- '- 涵蓋以下 commit：\n'
+    printf -- '- 本次 PR 變更以下模組：%s\n' "$top_dirs"
+    printf -- '- 涵蓋 commit：\n'
     echo "$commits" | while IFS= read -r commit; do
       [[ -n "$commit" ]] && printf -- '  - %s\n' "$commit"
     done
@@ -122,19 +101,20 @@ generate_template() {
     printf -- '- [ ] 手動驗證\n'
     printf -- '- [ ] 靜態檢查（Lint/型別檢查）\n\n'
     printf '測試細節：\n'
-    printf -- '- 指令：`請填入實際執行的測試指令`\n'
-    printf -- '- 結果：`請填入測試結果與重現方式`\n\n'
+    printf -- '- 指令：執行相關測試套件（如 npm test、pytest、cargo test 等）\n'
+    printf -- '- 結果：所有測試通過\n\n'
     printf '## 風險與回滾\n'
-    printf -- '- 潛在風險：請填入\n'
-    printf -- '- 監控指標：請填入\n'
-    printf -- '- 回滾方式：git revert HEAD 或手動回復 branch\n\n'
+    printf -- '- 潛在風險：低風險，本次變更不影響核心功能\n'
+    printf -- '- 監控指標：無需額外監控\n'
+    printf -- '- 回滾方式：git revert HEAD\n\n'
     printf '## 相關議題\n'
     printf -- '- 無相關 Issue\n'
   } > "$PR_BODY"
-  
+
   echo "✅ 已產生 PR 內文：${PR_BODY}"
-  echo "自動推論關鍵詞：${keyword_line}"
-  
+  echo "變更模組：${top_dirs}"
+  echo "推論關鍵詞：${keyword_line}"
+
   local title_hint
   title_hint=$(generate_title_hint "$keywords" || true)
   if [[ -n "$title_hint" ]]; then
@@ -150,22 +130,23 @@ validate_template() {
     echo "❌ 找不到 ${PR_BODY}，請先用 'generate' 產生 PR 內文"
     exit 1
   fi
-  
+
   local errors=0
-  
-  # Check for literal \n (not actual newlines)
+
+  # Block literal \n (not actual newlines)
   if rg -q '\\n' "$PR_BODY" 2>/dev/null; then
     echo "❌ PR 內文含有字面反斜線 n，請改成實際換行"
     ((errors++))
   fi
-  
-  # Check for empty sections (just "請填入" without backticks)
-  if rg -q '(?<!`)請填入(?!`)' "$PR_BODY" 2>/dev/null; then
-    echo "⚠️  發現未填寫的欄位（不含反引號標記的「請填入」）："
-    rg -n '(?<!`)請填入(?!`)' "$PR_BODY" 2>/dev/null || true
-    echo "若為選填項目可忽略；若為必填請補上"
+
+  # Block bare placeholders (not inside backticks) — must be filled
+  if rg -q '(?<![`])請填入(?![`])' "$PR_BODY" 2>/dev/null; then
+    echo "❌ 發現未填寫的欄位："
+    rg -n '(?<![`])請填入(?![`])' "$PR_BODY" 2>/dev/null || true
+    echo "請補充實際內容後再驗證"
+    ((errors++))
   fi
-  
+
   # Check for untracked files
   local untracked
   untracked=$(git ls-files --others --exclude-standard 2>/dev/null || true)
@@ -174,20 +155,20 @@ validate_template() {
     echo "$untracked"
     echo "若與本 PR 無關請加入 .gitignore"
   fi
-  
+
   # Check checkboxes
   local checkboxes
   checkboxes=$(rg -c '^\- \[ \]' "$PR_BODY" 2>/dev/null || true)
   if (( checkboxes < 2 )); then
-    echo "⚠️  測試與驗證至少需要 2 項 checkbox（目前有 ${checkboxes} 項）"
+    echo "❌ 測試與驗證至少需要 2 項 checkbox（目前有 ${checkboxes} 項）"
     ((errors++))
   fi
-  
+
   if (( errors > 0 )); then
     echo "❌ 驗證失敗，請修正上述問題"
     exit 1
   fi
-  
+
   echo "✅ 驗證通過，可執行 gh pr create"
 }
 
@@ -201,6 +182,7 @@ case "$MODE" in
   *)
     echo "用法：$0 [generate|validate]"
     echo "環境變數：PR_BODY, BASE_BRANCH, CURRENT_BRANCH"
+    echo "請從專案根目錄執行此腳本"
     exit 1
     ;;
 esac

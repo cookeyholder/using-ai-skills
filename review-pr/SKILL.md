@@ -20,12 +20,6 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
    gh auth status
    ```
 
-2. **PR state check**: If a PR was inferred or provided, verify it's still open
-   ```bash
-   gh pr view <pr> --json state --jq .state
-   ```
-   If state is not `OPEN`, stop and report.
-
 ## Steps
 
 1. **Select PR**
@@ -35,6 +29,11 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
    gh pr view --json number,url,title,headRefName,baseRefName,state
    ```
    - If inference fails, list open PRs and ask user to pick one.
+   - **After selection**: verify PR is still open
+     ```bash
+     gh pr view <pr> --json state --jq .state
+     ```
+     If state is not `OPEN`, stop and report.
 
 2. **Collect review feedback**
    ```bash

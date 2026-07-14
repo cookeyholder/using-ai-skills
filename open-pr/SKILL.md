@@ -7,6 +7,8 @@ description: 發起 GitHub Pull Request 並以臺灣繁體中文撰寫完整 PR 
 
 使用 `gh` 從目前分支發起 PR，產出詳細且可審閱的 PR message（臺灣繁體），並在發起後自動執行 `review-pr-3x` 持續追蹤。
 
+在使用任何指令前，先 `cd` 到專案根目錄。
+
 ## 前置檢查
 
 1. 確認目前在 Git 儲存庫且 `gh` 可用。
@@ -42,29 +44,36 @@ PR 標題與內文都必須使用臺灣繁體中文，避免中國常見用語�
 
 ## 產生 PR 內文
 
+先進入專案根目錄，再從該目錄執行腳本（使用絕對路徑避免分析到 skill 儲存庫）。
+
 ```bash
-BASE_BRANCH="$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name')"
-scripts/build_pr_body.sh generate
+cd <專案根目錄>
+
+export BASE_BRANCH="$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name')"
+export CURRENT_BRANCH="$(git branch --show-current)"
+
+<agent-skills-root>/open-pr/scripts/build_pr_body.sh generate
 ```
 
 腳本會自動分析 commit log、diff 產生：
-- 變更摘要（含 commit 列表）
-- 主要變更項目（含檔案與變更類型）
-- 測試與驗證 checkbox
+- 變更摘要（列出所有變更模組與 commit 列表）
+- 主要變更項目（含檔案與變更類型：新增/修改/刪除）
+- 測試與驗證 checkbox 與預設測試細節
 - 風險與回滾預設值
+- 相關議題
 
-**可選**：若需要補充測試細節、風險說明或相關 issue，請編輯 `/tmp/pr_body.md`。
+**可選**：若需補充測試細節、風險說明，請編輯 `/tmp/pr_body.md`。
 
 ## 驗證 PR 內文
 
 ```bash
-scripts/build_pr_body.sh validate
+<agent-skills-root>/open-pr/scripts/build_pr_body.sh validate
 ```
 
 驗證項目：
 - 無字面 `\n` 字串（會導致 PR 頁面顯示異常）
+- 無未填寫的「請填入」欄位
 - 至少有 2 項測試 checkbox
-- 警告未追蹤檔案（不強制阻擋）
 
 ## 發起 PR
 
