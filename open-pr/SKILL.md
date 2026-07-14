@@ -12,7 +12,11 @@ description: 發起 GitHub Pull Request 並以臺灣繁體中文撰寫完整 PR 
 1. 確認目前在 Git 儲存庫且 `gh` 可用。
 2. 確認目前分支不是 `main`、`master`。
 3. 確認有可提交的變更，並先完成必要測試。
-4. 推送目前分支：
+4. 確認遠端 origin 存在，若無則提示設定：
+```bash
+git remote get-url origin
+```
+5. 推送目前分支：
 ```bash
 git push -u origin "$(git branch --show-current)"
 ```
@@ -41,7 +45,8 @@ PR 標題與內文都必須使用臺灣繁體中文，避免中國常見用語�
 先蒐集變更資訊：
 
 ```bash
-BASE_BRANCH="${BASE_BRANCH:-main}"
+DEFAULT_BRANCH="$(gh repo view --json defaultBranch --jq .defaultBranch)"
+BASE_BRANCH="${BASE_BRANCH:-${DEFAULT_BRANCH}}"
 CURRENT_BRANCH="$(git branch --show-current)"
 git fetch origin
 

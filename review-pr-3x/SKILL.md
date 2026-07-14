@@ -8,7 +8,7 @@ metadata:
   version: "1.1"
 ---
 
-Run `review-pr` three times with 10-minute intervals between runs.
+Run `review-pr` three times with 5-minute intervals between runs.
 
 **Input**: Optional PR number or URL (e.g., `review-pr-3x 19`).
 If omitted, infer from current branch using the same rule as `review-pr`.
@@ -17,7 +17,7 @@ If omitted, infer from current branch using the same rule as `review-pr`.
 
 1. Resolve target PR (same logic as `review-pr`).
 2. Execute 3 rounds of review/fix/check cycle.
-3. Wait 10 minutes (`600s`) between rounds 1→2 and 2→3.
+3. Wait 5 minutes (`300s`) between rounds 1→2 and 2→3.
 
 ## Per Round (i = 1..3)
 
@@ -41,7 +41,7 @@ If omitted, infer from current branch using the same rule as `review-pr`.
 After round 1 and round 2:
 
 ```bash
-sleep 600
+sleep 300
 ```
 
 During waiting, report that the command is intentionally paused for polling interval.

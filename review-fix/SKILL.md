@@ -3,7 +3,7 @@ name: review-fix
 description: 全方位進行專案程式碼審查，產生詳細且清楚的審查報告，並根據報告自動建立 OpenSpec change 的所有提案文件，用來規劃並修復所有發現的問題。
 license: MIT
 metadata:
-    version: "1.6"
+    version: "1.7"
     # disable-model-invocation: true is intentionally omitted because
     # other skills (review-pr, refactor-django, etc.) may trigger this
     # skill via description matching when users request code reviews.
@@ -32,7 +32,7 @@ metadata:
     - 將所有發現的問題彙整，建立一份結構清晰、詳細的 Markdown 文件。
     - 為每個問題標示優先級別（例如：`P0_CRITICAL`, `P1_HIGH`, `P2_MEDIUM`, `P3_LOW`）。
     - **報告全文必須使用「臺灣慣用語」的繁體中文撰寫**（包含標題、內文、建議與結論；避免簡體中文與中國慣用詞）。
-    - 將詳細的審查報告儲存至專案目錄的 `docs/CODE_REVIEW_REPORT.md`。若有迭代版本，最終必須回寫整併至同一主檔（詳見「階段四：文件整理與合併」）。
+    - 將詳細的審查報告儲存至專案目錄的 `docs/CODE_REVIEW_REPORT.md`。若有迭代版本，最終必須回寫整併至同一主檔（詳見階段三的「文件整理與合併」步驟）。
 
 ## 階段二：建立 OpenSpec 修復提案 (OpenSpec Change Creation)
 
@@ -74,7 +74,39 @@ metadata:
 10. **迭代停止條件：**
     - 最多迭代 3 輪，避免無限循環。
     - 若連續 2 輪無新增 P0/P1 問題，或僅剩 P3 非阻斷項，即可結束並彙整後續改善項目。
-11. **文件整理與合併 (Documentation Consolidation)：** 參考步驟 8 的「移除中間版本文件」規範，將 `docs/` 底下的重複與版本化審查檔案（如 `CODE_REVIEW_REPORT_v2.md`、`fixes-iteration-2` 等）整併至單一 canonical 檔案，並清理或歸檔中間檔至 `docs/archive/review-fix/`。確認 `docs/` 根目錄僅保留一份 canonical 檔案。
+11. **單輪超時控制：** 每輪修復設定最長執行時間（如 30 分鐘）。若該輪修復在時間內未完成，先輸出當前進度（已修復項目與未修復項目），然後依停止條件判斷是否進入下一輪。
+12. **文件整理與合併 (Documentation Consolidation)：** 參考步驟 8 的「移除中間版本文件」規範，將 `docs/` 底下的重複與版本化審查檔案（如 `CODE_REVIEW_REPORT_v2.md`、`fixes-iteration-2` 等）整併至單一 canonical 檔案，並清理或歸檔中間檔至 `docs/archive/review-fix/`。確認 `docs/` 根目錄僅保留一份 canonical 檔案。
+
+## 階段四
+
+為了降低重複工，先執行以下腳本自動產生審查骨架與 OpenSpec 指令清單，再進入人工審查與修復：
+
+```bash
+python3 "$(codegraph which review-fix)/scripts/bootstrap_review_fix.py" --repo .
+```
+> **注意：** 若 `codegraph` CLI 不可用，請先 `cd` 至 skills 根目錄再執行相對路徑：`python3 review-fix/scripts/bootstrap_review_fix.py --repo .`。
+
+常用參數：
+
+- `--change-name <name>`：指定 OpenSpec change 名稱。
+- `--report-out <path>`：指定報告輸出位置（預設 `docs/CODE_REVIEW_REPORT.md`）。
+- `--plan-out <path>`：指定 OpenSpec 計畫輸出位置（預設 `docs/OPENSPEC_REVIEW_FIX_PLAN.md`）。
+- `--print-only`：僅輸出內容，不寫入檔案。
+
+### Bootstrap 安全檢查
+
+執行腳本前，建議同時執行依賴安全性掃描：
+
+```bash
+# npm
+npm audit --production 2>/dev/null || true
+# pip
+pip-audit 2>/dev/null || true
+# trivy
+trivy filesystem --severity HIGH,CRITICAL . 2>/dev/null || true
+```
+
+若任一掃描回報 `CRITICAL` 漏洞，需先記錄至審查報告再進行修復。
 
 ## 階段五：Git 分支與高頻提交 (Git Workflow - Mandatory)
 
@@ -120,22 +152,6 @@ metadata:
 
 另外，若需產生或更新 `docs/CODE_REVIEW_REPORT.md`（含迭代版本），其內容同樣必須維持「臺灣慣用語」的繁體中文一致性。
 
-## 效率強化：快速啟動腳本 (Bootstrap Script)
-
-為了降低重複工，先執行以下腳本自動產生審查骨架與 OpenSpec 指令清單，再進入人工審查與修復：
-
-```bash
-python3 "$(codegraph which review-fix)/scripts/bootstrap_review_fix.py" --repo .
-```
-> **注意：** 若 `codegraph` CLI 不可用，請先 `cd` 至 skills 根目錄再執行相對路徑：`python3 review-fix/scripts/bootstrap_review_fix.py --repo .`。
-
-常用參數：
-
-- `--change-name <name>`：指定 OpenSpec change 名稱。
-- `--report-out <path>`：指定報告輸出位置（預設 `docs/CODE_REVIEW_REPORT.md`）。
-- `--plan-out <path>`：指定 OpenSpec 計畫輸出位置（預設 `docs/OPENSPEC_REVIEW_FIX_PLAN.md`）。
-- `--print-only`：僅輸出內容，不寫入檔案。
-
 ## Subagent Orchestration（平行化審查與修復）
 
 當環境可使用 subagent 時，請優先採用以下編排，以縮短整體週期。
@@ -173,6 +189,14 @@ python3 "$(codegraph which review-fix)/scripts/bootstrap_review_fix.py" --repo .
 - 回報實際變更檔案、驗證方式、剩餘風險。
 
 主 agent 最後統一執行全域測試與回歸確認。
+
+### Subagent 環境不可用時的降級策略
+
+若 subagent 環境無法啟動（例如 API 限制或並行執行不支援），請降級為線性執行：
+
+- **審查階段**：依序執行 security → performance → quality → test 分析，由主 agent 手動合併結果。
+- **修復階段**：依 OpenSpec tasks.md 順序，由主 agent 逐項修復與測試。
+- **回報**：在最終輸出中備註「以線性模式執行（subagent 不可用）」。
 
 ### 協作規範
 

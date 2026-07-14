@@ -33,7 +33,12 @@ generate_title_hint() {
 generate_issue_context() {
   local branch="$CURRENT_BRANCH"
   local issue
-  issue=$(echo "$branch" | grep -oE '[0-9]{2,}' || true)
+  # Try pattern: issue-123, bug-123, fix-123, ABC-123
+  issue=$(echo "$branch" | grep -oE '(issue|bug|fix)[-/]?[0-9]{2,}' | grep -oE '[0-9]{2,}' || true)
+  # Fallback: standalone digits in branch name
+  if [[ -z "$issue" ]]; then
+    issue=$(echo "$branch" | grep -oE '[0-9]{2,}' || true)
+  fi
   if [[ -n "$issue" ]] && command -v gh >/dev/null; then
     if gh issue view "$issue" --json title >/dev/null 2>&1; then
       gh issue view "$issue" --json title --jq '.title'
@@ -49,7 +54,8 @@ generate_template() {
   keyword_line=$(printf '%s' "$keywords" | paste -sd ', ' -)
   issue_title=$(generate_issue_context || true)
   mkdir -p "$(dirname "$PR_BODY")"
-  local primary_dir="${diff_dirs%%$'\n'*}"
+  local primary_dir
+  primary_dir=$(printf '%s' "$diff_dirs" | xargs -I{} dirname "{}" | sort | uniq -c | sort -nr | head -n1 | awk '{print $2}')
   [[ -z "${primary_dir// }" ]] && primary_dir="多個模組"
   {
     printf '## 自動產生 - 變更摘要\n'
@@ -127,7 +133,10 @@ validate_template() {
     exit 1
   fi
   local issue
-  issue=$(echo "$CURRENT_BRANCH" | grep -oE '[0-9]{2,}' || true)
+  issue=$(echo "$CURRENT_BRANCH" | grep -oE '(issue|bug|fix)[-/]?[0-9]{2,}' | grep -oE '[0-9]{2,}' || true)
+  if [[ -z "$issue" ]]; then
+    issue=$(echo "$CURRENT_BRANCH" | grep -oE '[0-9]{2,}' || true)
+  fi
   if [[ -n "$issue" ]] && command -v gh >/dev/null; then
     if ! gh issue view "$issue" >/dev/null 2>&1; then
       echo "[open-pr] 未找到 issue #${issue}，請確認 branch 名稱或相關議題設定。"
