@@ -5,13 +5,20 @@ license: MIT
 compatibility: Requires GitHub CLI (gh).
 metadata:
   author: local
-  version: "1.2"
+  version: "1.3"
 ---
 
 Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run `review-fix` validation, then commit and push updates.
 
 **Input**: Optional PR number or URL (e.g., `review-pr 19`).
 If omitted, infer from current branch. If ambiguous, show candidate PRs and ask user to choose.
+
+## Pre-checks
+
+1. **Auth check**: Verify GitHub CLI is authenticated
+   ```bash
+   gh auth status
+   ```
 
 ## Steps
 
@@ -22,6 +29,11 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
    gh pr view --json number,url,title,headRefName,baseRefName,state
    ```
    - If inference fails, list open PRs and ask user to pick one.
+   - **After selection**: verify PR is still open
+     ```bash
+     gh pr view <pr> --json state --jq .state
+     ```
+     If state is not `OPEN`, stop and report.
 
 2. **Collect review feedback**
    ```bash
@@ -72,7 +84,7 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
 
 7. **Commit, push, and re-verify PR**
    ```bash
-   git add -A
+   git add -u
    git commit -m "<clear message for the fixes>"
    git push
    ```

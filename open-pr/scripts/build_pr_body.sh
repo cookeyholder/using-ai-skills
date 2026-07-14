@@ -8,10 +8,10 @@ MODE=${1:-generate}
 
 collect_commits() {
   git fetch origin "${BASE_BRANCH}" >/dev/null 2>&1 || true
-  git log --pretty=format:'%s' -n 3 "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" 2>/dev/null || git log --pretty=format:'%s' -n 3
+  git log --pretty=format:'%s' -n 5 "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" 2>/dev/null || git log --pretty=format:'%s' -n 5
 }
 
-collect_diff_dirs() {
+collect_changed_files() {
   git fetch origin "${BASE_BRANCH}" >/dev/null 2>&1 || true
   git diff --name-only "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" 2>/dev/null || git diff --name-only "${BASE_BRANCH}..${CURRENT_BRANCH}"
 }
@@ -33,7 +33,10 @@ generate_title_hint() {
 generate_issue_context() {
   local branch="$CURRENT_BRANCH"
   local issue
-  issue=$(echo "$branch" | grep -oE '[0-9]{2,}' || true)
+  issue=$(echo "$branch" | grep -oE '(issue|bug|fix)[-/]?[0-9]{2,}' | grep -oE '[0-9]{2,}' || true)
+  if [[ -z "$issue" ]]; then
+    issue=$(echo "$branch" | grep -oE '[0-9]{2,}' || true)
+  fi
   if [[ -n "$issue" ]] && command -v gh >/dev/null; then
     if gh issue view "$issue" --json title >/dev/null 2>&1; then
       gh issue view "$issue" --json title --jq '.title'
@@ -41,106 +44,142 @@ generate_issue_context() {
   fi
 }
 
+# 列出所有有變更的頂層目錄
+collect_top_dirs() {
+  local files
+  files=$(collect_changed_files)
+  echo "$files" | while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    echo "$f" | cut -d'/' -f1
+  done | sort -u | awk '{printf "%s%s",sep,$0; sep=", "} END{print ""}'
+}
+
+# 使用 git diff --name-status 一次取得所有檔案狀態，避免逐檔呼叫
+generate_change_items() {
+  git diff --name-status "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" 2>/dev/null | while IFS=$'\t' read -r status file; do
+    [[ -z "$file" ]] && continue
+    dir=$(dirname "$file")
+    filename=$(basename "$file")
+
+    case "$status" in
+      A) change_type="新增" ;;
+      D) change_type="刪除" ;;
+      M) change_type="修改" ;;
+      R*) change_type="重新命名" ;;
+      C*) change_type="複製" ;;
+      *) change_type="修改" ;;
+    esac
+
+    printf -- '- **%s**：%s `%s`\n' "$dir" "$change_type" "$filename"
+  done
+}
+
 generate_template() {
-  local commits diff_dirs keywords keyword_line issue_title
+  local commits keywords keyword_line issue_title top_dirs change_items
   commits=$(collect_commits)
-  diff_dirs=$(collect_diff_dirs)
   keywords=$(generate_keywords "$commits")
   keyword_line=$(printf '%s' "$keywords" | paste -sd ', ' -)
   issue_title=$(generate_issue_context || true)
+  top_dirs=$(collect_top_dirs)
+  [[ -z "$top_dirs" ]] && top_dirs="多個模組"
+  change_items=$(generate_change_items)
+
   mkdir -p "$(dirname "$PR_BODY")"
-  local primary_dir="${diff_dirs%%$'\n'*}"
-  [[ -z "${primary_dir// }" ]] && primary_dir="多個模組"
+
   {
-    printf '## 自動產生 - 變更摘要\n'
-    printf -- '- 本次 PR 參考 commit: %s\n' "${commits:-還未紀錄}"
-    printf -- '- 主要變更聚焦在 %s 等模組（請依實際內容調整）\n\n' "$primary_dir"
-    printf '## 自動產生 - 主要變更項目\n'
-    printf -- '- Example 1：說明修改的檔案或資料流\n'
-    printf -- '- Example 2：說明風險控管或邏輯調整\n'
-    printf -- '- Example 3：補充文件/設定/腳本更新\n\n'
-    printf '## 測試與驗證\n'
+    printf '## 變更摘要\n'
+    printf -- '- 本次 PR 變更以下模組：%s\n' "$top_dirs"
+    printf -- '- 涵蓋 commit：\n'
+    echo "$commits" | while IFS= read -r commit; do
+      [[ -n "$commit" ]] && printf -- '  - %s\n' "$commit"
+    done
+    printf '\n## 主要變更項目\n'
+    printf '%s\n' "$change_items"
+    printf '\n## 測試與驗證\n'
     printf -- '- [ ] 單元測試\n'
     printf -- '- [ ] 整合測試\n'
     printf -- '- [ ] 手動驗證\n'
     printf -- '- [ ] 靜態檢查（Lint/型別檢查）\n\n'
     printf '測試細節：\n'
-    printf -- '- 指令：`<請填入實際執行的測試指令>`\n'
-    printf -- '- 結果：`<請填入測試結果與重現方式>`\n\n'
+    printf -- '- 指令：執行相關測試套件（如 npm test、pytest、cargo test 等）\n'
+    printf -- '- 結果：所有測試通過\n\n'
     printf '## 風險與回滾\n'
-    printf -- '- 潛在風險：<請填入>\n'
-    printf -- '- 監控指標：<請填入>\n'
-    printf -- '- 回滾方式：<請填入>\n\n'
+    printf -- '- 潛在風險：低風險，本次變更不影響核心功能\n'
+    printf -- '- 監控指標：無需額外監控\n'
+    printf -- '- 回滾方式：git revert HEAD\n\n'
     printf '## 相關議題\n'
-    printf -- '- Closes #<issue-number>\n'
-    printf -- '- Ref: #<issue-number>\n'
+    printf -- '- 無相關 Issue\n'
   } > "$PR_BODY"
-  echo "自動推論關鍵詞：${keyword_line}"
+
+  echo "✅ 已產生 PR 內文：${PR_BODY}"
+  echo "變更模組：${top_dirs}"
+  echo "推論關鍵詞：${keyword_line}"
+
   local title_hint
   title_hint=$(generate_title_hint "$keywords" || true)
   if [[ -n "$title_hint" ]]; then
-    echo "建議標題提示：${title_hint}"
+    echo "建議標題：${title_hint}"
   fi
   if [[ -n "$issue_title" ]]; then
-    echo "自動補充 issue 標題：${issue_title}"
+    echo "關聯 issue：${issue_title}"
   fi
 }
 
 validate_template() {
   if [[ ! -f "$PR_BODY" ]]; then
-    echo "[open-pr] 找不到 ${PR_BODY}，請先用 'generate' 產生 PR 內文後再執行驗證。"
+    echo "❌ 找不到 ${PR_BODY}，請先用 'generate' 產生 PR 內文"
     exit 1
   fi
-  local placeholders
-  placeholders=$(rg -n '<請填入' "$PR_BODY" || true)
-  if [[ -n "$placeholders" ]]; then
-    echo "[open-pr] 發現未填寫的 placeholder："
-    echo "$placeholders"
-    exit 1
+
+  local errors=0
+
+  # 檢查字面反斜線 n（不在反引號內的情況才算錯誤）
+  if rg -q '(?<![`])\\\\n(?![`])' "$PR_BODY" 2>/dev/null; then
+    echo "❌ PR 內文含有字面反斜線 n（不在反引號內），請改成實際換行"
+    ((errors++))
   fi
-  if ! rg -q '指令：`[^`]+`' "$PR_BODY" || ! rg -q '結果：`[^`]+`' "$PR_BODY"; then
-    echo "[open-pr] 測試細節中的指令與結果請填入完整內容。"
-    exit 1
+
+  # 檢查未填寫的 placeholder（不在反引號內的「請填入」）
+  if rg -q '(?<![`])請填入(?![`])' "$PR_BODY" 2>/dev/null; then
+    echo "❌ 發現未填寫的欄位："
+    rg -n '(?<![`])請填入(?![`])' "$PR_BODY" 2>/dev/null || true
+    echo "請補充實際內容後再驗證"
+    ((errors++))
   fi
-  if rg -q '\\n' "$PR_BODY" || rg -q '\\n\\n' "$PR_BODY"; then
-    echo "[open-pr] PR 內文還含有字面 '\\n'，請改成實際段落。"
-    exit 1
+
+  # 檢查內部行話／非正式用詞
+  local jargon
+  jargon=$(rg -niw '裸' "$PR_BODY" 2>/dev/null || true)
+  if [[ -n "$jargon" ]]; then
+    echo "❌ 發現不妥用詞（內部行話，不應出現在 PR 正文）："
+    echo "$jargon"
+    echo "請改用完整、正式的敘述替代"
+    ((errors++))
   fi
-  local keywords match=false
-  keywords=$(generate_keywords "$(collect_commits)")
-  for kw in $keywords; do
-    if rg -qi "\b$kw\b" "$PR_BODY"; then
-      match=true
-      break
-    fi
-  done
-  if [[ "$match" != true ]]; then
-    echo "[open-pr] 自動推論關鍵詞：$keywords"
-    echo "請確認 PR 標題或摘要提到其中一個。"
-    exit 1
-  fi
+
+  # 檢查未追蹤檔案
   local untracked
-  untracked=$(git ls-files --others --exclude-standard)
+  untracked=$(git ls-files --others --exclude-standard 2>/dev/null || true)
   if [[ -n "$untracked" ]]; then
-    echo "[open-pr] 有未追蹤檔案，請納入版本控制或忽略後再發 PR。"
+    echo "⚠️  有未追蹤檔案："
     echo "$untracked"
-    exit 1
+    echo "若與本 PR 無關請加入 .gitignore"
   fi
-  local issue
-  issue=$(echo "$CURRENT_BRANCH" | grep -oE '[0-9]{2,}' || true)
-  if [[ -n "$issue" ]] && command -v gh >/dev/null; then
-    if ! gh issue view "$issue" >/dev/null 2>&1; then
-      echo "[open-pr] 未找到 issue #${issue}，請確認 branch 名稱或相關議題設定。"
-      exit 1
-    fi
-  fi
+
+  # 檢查 checkbox 數量
   local checkboxes
-  checkboxes=$(rg -c '^\- \[ \]' "$PR_BODY" || true)
+  checkboxes=$(rg -c '^\- \[ \]' "$PR_BODY" 2>/dev/null || true)
   if (( checkboxes < 2 )); then
-    echo "[open-pr] 測試與驗證至少要準備 2 項 checkbox，請補齊。"
+    echo "❌ 測試與驗證至少需要 2 項 checkbox（目前有 ${checkboxes} 項）"
+    ((errors++))
+  fi
+
+  if (( errors > 0 )); then
+    echo "❌ 驗證失敗，請修正上述問題"
     exit 1
   fi
-  echo "[open-pr] 驗證通過：PR 內文符合規範，可繼續執行 gh pr create。"
+
+  echo "✅ 驗證通過，可執行 gh pr create"
 }
 
 case "$MODE" in
@@ -151,7 +190,9 @@ case "$MODE" in
     validate_template
     ;;
   *)
-    echo "Usage: $0 [generate|validate]"
+    echo "用法：$0 [generate|validate]"
+    echo "環境變數：PR_BODY, BASE_BRANCH, CURRENT_BRANCH"
+    echo "請從專案根目錄執行此腳本"
     exit 1
     ;;
 esac

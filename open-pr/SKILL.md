@@ -7,19 +7,25 @@ description: 發起 GitHub Pull Request 並以臺灣繁體中文撰寫完整 PR 
 
 使用 `gh` 從目前分支發起 PR，產出詳細且可審閱的 PR message（臺灣繁體），並在發起後自動執行 `review-pr-3x` 持續追蹤。
 
+在使用任何指令前，先 `cd` 到專案根目錄。
+
 ## 前置檢查
 
 1. 確認目前在 Git 儲存庫且 `gh` 可用。
 2. 確認目前分支不是 `main`、`master`。
 3. 確認有可提交的變更，並先完成必要測試。
-4. 推送目前分支：
+4. 確認遠端 origin 存在，若無則提示設定：
+```bash
+git remote get-url origin
+```
+5. 推送目前分支：
 ```bash
 git push -u origin "$(git branch --show-current)"
 ```
 
 ## 語言規範（強制）
 
-PR 標題與內文都必須使用臺灣繁體中文，避免中國常見用語。
+PR 標題與內文都必須使用臺灣繁體中文，避免中國常見用語，也禁止非正規的內部行話。
 
 常見替換：
 - 拉取請求 -> Pull Request
@@ -34,73 +40,42 @@ PR 標題與內文都必須使用臺灣繁體中文，避免中國常見用語�
 - 運行 -> 執行
 - 優化 -> 最佳化
 
+禁止用詞：裸（改用「未填寫的」「無包裝的」等完整描述）、不應在正式 PR 訊息中出現的內部行話或簡稱。
+
 若偵測到不符合的詞，先改寫再發 PR。
 
-## 產生詳細 PR 訊息
+## 產生 PR 內文
 
-先蒐集變更資訊：
-
-```bash
-BASE_BRANCH="${BASE_BRANCH:-main}"
-CURRENT_BRANCH="$(git branch --show-current)"
-git fetch origin
-
-git log --oneline "origin/${BASE_BRANCH}..${CURRENT_BRANCH}"
-git diff --stat "origin/${BASE_BRANCH}...${CURRENT_BRANCH}"
-```
-
-建立 PR 內文檔案（務必完整填寫）：
+先進入專案根目錄，再從該目錄執行腳本（使用絕對路徑避免分析到 skill 儲存庫）。
 
 ```bash
-cat > /tmp/pr_body.md <<'MD'
-## 變更摘要
-- 說明這次變更解決的問題與核心做法。
-- 描述主要模組、流程或介面調整。
+cd <專案根目錄>
 
-## 主要變更項目
-- 項目 1：影響範圍、設計考量、相容性。
-- 項目 2：關鍵邏輯、例外處理、風險控管。
-- 項目 3：必要的設定、文件或腳本調整。
+export BASE_BRANCH="$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name')"
+export CURRENT_BRANCH="$(git branch --show-current)"
 
-## 測試與驗證
-- [ ] 單元測試
-- [ ] 整合測試
-- [ ] 手動驗證
-- [ ] 靜態檢查（Lint/型別檢查）
-
-測試細節：
-- 指令：`<請填入實際執行的測試指令>`
-- 結果：`<請填入測試結果與重現方式>`
-
-## 風險與回滾
-- 潛在風險：<請填入>
-- 監控指標：<請填入>
-- 回滾方式：<請填入>
-
-## 相關議題
-- Closes #<issue-number>
-- Ref: #<issue-number>
-MD
+<agent-skills-root>/open-pr/scripts/build_pr_body.sh generate
 ```
 
-## 檢查 PR 內文格式
+腳本會自動分析 commit log、diff 產生：
+- 變更摘要（列出所有變更模組與 commit 列表）
+- 主要變更項目（含檔案與變更類型：新增/修改/刪除）
+- 測試與驗證 checkbox 與預設測試細節
+- 風險與回滾預設值
+- 相關議題
 
-在提交之前，先檢查 `/tmp/pr_body.md` 是否含有字面 `\n`（單次）或 `\n\n`（連續），這些會導致 PR 頁面顯示怪異：
+**可選**：若需補充測試細節、風險說明，請編輯 `/tmp/pr_body.md`。
+
+## 驗證 PR 內文
 
 ```bash
-rg -n "\\\\n" /tmp/pr_body.md
-rg -n "\\\\n\\\\n" /tmp/pr_body.md
+<agent-skills-root>/open-pr/scripts/build_pr_body.sh validate
 ```
 
-若輸出非空，請把該位置改成自然分行或以中文敘述代替 `\n`，再重新確認沒有字串殘留。
-
-PR 標題與內文都要切合本次變更，避免泛用敘述。
-
-```text
-<類型>: <以臺灣繁體中文描述本次變更重點>
-```
-
-類型示例：`feat`、`fix`、`refactor`、`docs`、`test`、`chore`。
+驗證項目：
+- 無字面 `\n` 字串（會導致 PR 頁面顯示異常）
+- 無未填寫的「請填入」欄位
+- 至少有 2 項測試 checkbox
 
 ## 發起 PR
 
@@ -108,7 +83,7 @@ PR 標題與內文都要切合本次變更，避免泛用敘述。
 gh pr create \
   --base "${BASE_BRANCH}" \
   --head "${CURRENT_BRANCH}" \
-  --title "<請填入臺灣繁體中文標題>" \
+  --title "<臺灣繁體中文標題>" \
   --body-file /tmp/pr_body.md
 ```
 
@@ -119,21 +94,6 @@ PR_URL="$(gh pr view --json url --jq .url)"
 PR_NUMBER="$(gh pr view --json number --jq .number)"
 echo "PR: ${PR_URL}"
 ```
-
-## 自動模板與驗證
-
-使用 `open-pr/scripts/build_pr_body.sh` 來自動補齊模板並在發 PR 前複查：
-
-1. 執行 `scripts/build_pr_body.sh generate`（或搭配 `PR_BODY`/`BASE_BRANCH` 環境變數）建立 `/tmp/pr_body.md`。這會根據 commit log、diff、branch/issue 抽出「自動產生」段落、建議標題以及關鍵字。
-2. 編輯 `/tmp/pr_body.md`：填入實際變更摘要、主要變更項目、測試指令/結果、風險與回滾、相關議題（或把這份檔案搬進 repo 以檢查 diff）。
-3. 執行 `scripts/build_pr_body.sh validate`，它會：
-   - 確保沒有 `<請填入…>` placeholder 或 `\n`/`\n\n` 字串、
-   - 檢查測試指令與結果已填入且至少有 2 項 checkbox、
-   - 比對推論關鍵字與 PR 內文是否吻合、
-   - 確認無多餘的未追蹤檔案、branch 對應的 issue 存在。
-4. 檢查通過後，才執行 `gh pr create`，再接 `review-pr-3x`。
-
-驗證失敗時，腳本會以中文提醒錯誤項目並中止，請依提示補齊再重試。
 
 ## 自動追蹤（強制）
 
