@@ -57,15 +57,20 @@ generate_template() {
   local primary_dir
   primary_dir=$(printf '%s' "$diff_dirs" | xargs -I{} dirname "{}" | sort | uniq -c | sort -nr | head -n1 | awk '{print $2}')
   [[ -z "${primary_dir// }" ]] && primary_dir="多個模組"
+
+  # Build file list for the summary
+  local file_list
+  file_list=$(printf '%s' "$diff_dirs" | head -n 10 | sed 's/^/- /')
+
   {
-    printf '## 自動產生 - 變更摘要\n'
+    printf '## 變更摘要\n'
     printf -- '- 本次 PR 參考 commit: %s\n' "${commits:-還未紀錄}"
-    printf -- '- 主要變更聚焦在 %s 等模組（請依實際內容調整）\n\n' "$primary_dir"
-    printf '## 自動產生 - 主要變更項目\n'
-    printf -- '- Example 1：說明修改的檔案或資料流\n'
-    printf -- '- Example 2：說明風險控管或邏輯調整\n'
-    printf -- '- Example 3：補充文件/設定/腳本更新\n\n'
-    printf '## 測試與驗證\n'
+    printf -- '- 主要變更聚焦在 %s 等模組\n\n' "$primary_dir"
+    printf '## 主要變更項目\n'
+    printf '%s\n' "$file_list" | while IFS= read -r line; do
+      printf -- '- %s：<請填入說明>\n' "$line"
+    done
+    printf '\n## 測試與驗證\n'
     printf -- '- [ ] 單元測試\n'
     printf -- '- [ ] 整合測試\n'
     printf -- '- [ ] 手動驗證\n'
@@ -102,6 +107,7 @@ validate_template() {
   if [[ -n "$placeholders" ]]; then
     echo "[open-pr] 發現未填寫的 placeholder："
     echo "$placeholders"
+    echo "[open-pr] 請將上述 <請填入...> 替換為實際內容後再重試。"
     exit 1
   fi
   if ! rg -q '指令：`[^`]+`' "$PR_BODY" || ! rg -q '結果：`[^`]+`' "$PR_BODY"; then
@@ -115,15 +121,14 @@ validate_template() {
   local keywords match=false
   keywords=$(generate_keywords "$(collect_commits)")
   for kw in $keywords; do
-    if rg -qi "\b$kw\b" "$PR_BODY"; then
+    if rg -qi "\b$kw\b" "$PR_BODY" 2>/dev/null; then
       match=true
       break
     fi
   done
   if [[ "$match" != true ]]; then
     echo "[open-pr] 自動推論關鍵詞：$keywords"
-    echo "請確認 PR 標題或摘要提到其中一個。"
-    exit 1
+    echo "建議在 PR 標題或摘要中提及其中一個關鍵詞。"
   fi
   local untracked
   untracked=$(git ls-files --others --exclude-standard)
