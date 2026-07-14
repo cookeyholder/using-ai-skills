@@ -9,11 +9,13 @@ Sets up a PreToolUse hook that intercepts and blocks dangerous git commands befo
 
 ## What Gets Blocked
 
-- `git push` (all variants including `--force`)
+- `git push` (all variants including `--force`, case-insensitive)
 - `git reset --hard`
 - `git clean -f` / `git clean -fd`
 - `git branch -D`
 - `git checkout .` / `git restore .`
+
+The hook also catches commands using absolute paths (e.g., `/usr/bin/git push`) and is case-insensitive.
 
 When blocked, Claude sees a message telling it that it does not have authority to access these commands.
 

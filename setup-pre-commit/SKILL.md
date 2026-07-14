@@ -39,9 +39,7 @@ This creates `.husky/` dir and adds `prepare: "husky"` to package.json.
 Write this file (no shebang needed for Husky v9+):
 
 ```
-npx lint-staged
-npm run typecheck
-npm run test
+npx lint-staged && npm run typecheck && npm run test
 ```
 
 **Adapt**: Replace `npm` with detected package manager. If repo has no `typecheck` or `test` script in package.json, omit those lines and tell the user.

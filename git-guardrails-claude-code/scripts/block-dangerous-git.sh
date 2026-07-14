@@ -1,23 +1,22 @@
 #!/bin/bash
 
 INPUT=$(cat)
-COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command')
+COMMAND=$(printf '%s\n' "$INPUT" | jq -r '.tool_input.command')
 
 DANGEROUS_PATTERNS=(
-  "git push"
-  "git reset --hard"
-  "git clean -fd"
-  "git clean -f"
-  "git branch -D"
-  "git checkout \."
-  "git restore \."
-  "push --force"
-  "reset --hard"
+  "(^|[[:space:]])(git[[:space:]]+)?push([[:space:]]|$)"
+  "(^|[[:space:]])(git[[:space:]]+)?reset[[:space:]]+--hard([[:space:]]|$)"
+  "(^|[[:space:]])(git[[:space:]]+)?clean[[:space:]]+-f[df]?([[:space:]]|$)"
+  "(^|[[:space:]])(git[[:space:]]+)?branch[[:space:]]+-D([[:space:]]|$)"
+  "(^|[[:space:]])(git[[:space:]]+)?checkout[[:space:]]+\.([[:space:]]|$)"
+  "(^|[[:space:]])(git[[:space:]]+)?restore[[:space:]]+\.([[:space:]]|$)"
+  "push[[:space:]]+--force"
+  "reset[[:space:]]+--hard"
 )
 
 for pattern in "${DANGEROUS_PATTERNS[@]}"; do
-  if echo "$COMMAND" | grep -qE "$pattern"; then
-    echo "BLOCKED: '$COMMAND' matches dangerous pattern '$pattern'. The user has prevented you from doing this." >&2
+  if printf '%s\n' "$COMMAND" | grep -qiE "$pattern"; then
+    printf 'BLOCKED: command matches dangerous pattern (case-insensitive). The user has prevented you from doing this.\n' >&2
     exit 2
   fi
 done

@@ -20,10 +20,10 @@ step() {
 }
 
 capture() {
-  local var="$1" question="$2" answer
+  local var_name="$1" question="$2" answer
   printf '\n>>> %s\n' "$question"
   read -r -p "    > " answer
-  printf -v "$var" '%s' "$answer"
+  printf -v "$var_name" '%s' "$answer"
 }
 
 # --- edit below ---------------------------------------------------------
