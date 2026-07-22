@@ -343,7 +343,9 @@ for BRANCH in feature/{CHANGE_NAME}-*; do
 done
 
 # Clean up worktrees
-git worktree remove ".worktrees/$BRANCH" --force
+for BRANCH in feature/{CHANGE_NAME}-*; do
+  git worktree remove ".worktrees/$BRANCH" --force
+done
 ```
 
 If merge conflicts occur, resolve them before proceeding.
@@ -500,7 +502,7 @@ Follow the open-pr skill exactly. Here is the full workflow:
 3. Confirm current branch is NOT main/master
 4. Confirm there are changes to commit
 5. Confirm remote origin exists: `git remote get-url origin`
-6. Push current branch: `git push -u origin "$(git branch --show-current)""
+6. Push current branch: `git push -u origin "$(git branch --show-current)"
 
 ## 語言規範（強制）
 
