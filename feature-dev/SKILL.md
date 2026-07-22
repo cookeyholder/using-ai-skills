@@ -237,7 +237,7 @@ After completion:
 
 ## Phase 4 — Implement with Parallel Worktrees
 
-**Goal:** Implement all tasks using isolated git worktrees for parallel execution.
+**Goal:** Implement all tasks using isolated git worktrees for parallel execution, strictly following TDD (Red-Green-Refactor).
 
 **CRITICAL:** Every implementation MUST run in a dedicated git worktree on a dedicated branch. Never implement directly on `main` or the current branch. This ensures clean isolation, easy rollback, and parallel-safe execution.
 
@@ -297,13 +297,15 @@ For each task in $PARALLEL_TASKS:
    - This task: {TASK_DETAIL}
 
    Instructions:
-   1. cd to the worktree
-   2. Run project setup (npm install / poetry install / etc.)
-   3. Implement the task following the spec
-   4. Write tests for the implementation
-   5. Run tests to verify
-   6. Mark task as done in the tasks file (- [ ] → - [x])
-   7. Commit with descriptive message
+    1. cd to the worktree
+    2. Run project setup (npm install / poetry install / etc.)
+    3. Write tests FIRST (following TDD — write failing tests before any implementation code)
+    4. Run tests to confirm they fail (RED)
+    5. Implement the task following the spec
+    6. Run tests to verify they pass (GREEN)
+    7. Refactor if needed while keeping tests green (REFACTOR)
+    8. Mark task as done in the tasks file (- [ ] → - [x])
+    9. Commit with descriptive message
 
    Constraints:
    - Follow existing code patterns from {CONSTRAINTS}
@@ -598,13 +600,13 @@ After completion, report to user:
 - Implement on `main` directly — always use dedicated worktree + branch
 - Skip security/performance audit (ships vulnerabilities)
 - Skip documentation updates (future contributors lose context)
-- Create PR without tests passing
+- Create PR without tests passing (all tests MUST follow TDD — written before implementation code)
 
 ## Red Flags
 
 - Proposal created without codebase exploration context
 - Tasks too large for single worktree implementation
-- No tests written during implementation
+- Tests written after implementation instead of TDD (test-first) approach
 - Implementation done on `main` instead of a dedicated branch/worktree
 - Security reviewer and performance reviewer conflict on same code
 - Merge conflicts during worktree consolidation
