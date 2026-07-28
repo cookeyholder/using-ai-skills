@@ -1,13 +1,13 @@
 ---
 name: feature-dev
-description: Use when adding a new feature to a project with full end-to-end automation — from codebase exploration through OpenSpec proposal, review, implementation with git worktrees, security/performance audit, and PR creation. Triggers: "add a feature", "implement new feature", "feature pipeline", "build feature end-to-end", or any request for orchestrated feature development.
+description: Use when adding a new feature to a project with full end-to-end automation — from codebase exploration through OpenSpec proposal, review, implementation with git worktrees, security/performance/spec-compliance audit, and PR creation. Triggers: "add a feature", "implement new feature", "feature pipeline", "build feature end-to-end", or any request for orchestrated feature development.
 ---
 
 # Feature Dev
 
 Orchestrate the complete feature development lifecycle using specialized subagents at each phase.
 
-**Core principle:** Explore → Propose → Review → Implement → Audit → Ship
+**Core principle:** Explore → Propose → Review → Implement → Audit & Verify → Ship
 
 **Phases run sequentially; within a phase, subagents may run in parallel where independence allows.**
 
@@ -27,7 +27,7 @@ Orchestrate the complete feature development lifecycle using specialized subagen
 - `openspec` CLI available
 - `gh` CLI authenticated
 - Git repository with remote `origin`
-- Skills loaded: `understand`, `openspec-ff-change`, `openspec-apply-change`, `using-git-worktrees`, `open-pr`, `owasp-security-review`, `performance-optimization`, `documentation-and-adrs`
+- Skills loaded: `understand`, `openspec-ff-change`, `openspec-apply-change`, `using-git-worktrees`, `open-pr`, `owasp-security-review`, `performance-optimization`, `documentation-and-adrs`, `code-review`
 
 ## The Pipeline
 
@@ -39,14 +39,14 @@ digraph pipeline {
     "Phase 2: Create Proposal" [shape=box style=filled fillcolor=lightgreen];
     "Phase 3: Review Proposal" [shape=box style=filled fillcolor=lightyellow];
     "Phase 4: Implement (parallel worktrees)" [shape=box style=filled fillcolor=lightcoral];
-    "Phase 5: Security & Performance Audit" [shape=box style=filled fillcolor=lightpink];
+    "Phase 5: Security, Performance & Spec Audit" [shape=box style=filled fillcolor=lightpink];
     "Phase 6: Open PR" [shape=box style=filled fillcolor=lightgray];
 
     "Phase 1: Explore Codebase" -> "Phase 2: Create Proposal";
     "Phase 2: Create Proposal" -> "Phase 3: Review Proposal";
     "Phase 3: Review Proposal" -> "Phase 4: Implement (parallel worktrees)";
-    "Phase 4: Implement (parallel worktrees)" -> "Phase 5: Security & Performance Audit";
-    "Phase 5: Security & Performance Audit" -> "Phase 6: Open PR";
+    "Phase 4: Implement (parallel worktrees)" -> "Phase 5: Security, Performance & Spec Audit";
+    "Phase 5: Security, Performance & Spec Audit" -> "Phase 6: Open PR";
 }
 ```
 
@@ -394,9 +394,9 @@ Return: list of documentation files updated, summary of changes made
 """, subagent_type="general")
 ```
 
-## Phase 5 — Security & Performance Audit
+## Phase 5 — Security, Performance & Spec Compliance Audit
 
-**Goal:** Review implemented code for security vulnerabilities and performance issues, then fix them.
+**Goal:** Review implemented code for security vulnerabilities, performance issues, and spec compliance, then fix them.
 
 ### Step 5a: Collect changed files
 
@@ -408,7 +408,7 @@ Store as `$CHANGED_FILES`.
 
 ### Step 5b: Dispatch parallel audit subagents
 
-Dispatch security and performance reviewers in parallel:
+Dispatch security, performance, and spec-compliance reviewers in parallel:
 
 ```
 Task("security-audit", prompt="""
@@ -460,13 +460,43 @@ After identifying issues, FIX THEM directly in the code.
 
 Return: list of findings, fixes applied, confirmation all issues resolved
 """, subagent_type="general")
+
+Task("spec-compliance-review", prompt="""
+Review the newly implemented code for correctness and spec compliance.
+
+Changed files:
+{CHANGED_FILES}
+
+OpenSpec context:
+- Specs: {SPECS_CONTENT}
+- Tasks: {TASKS_CONTENT}
+- Design: {DESIGN_CONTENT}
+
+Use the code-review skill methodology:
+1. Read each changed file
+2. Read the OpenSpec specs, tasks, and design
+3. Compare implementation against specs line by line
+4. Verify acceptance criteria from each task are met
+5. Check for missing edge cases and error handling not covered in specs
+
+For each issue found:
+- Type: Spec Mismatch / Missing Acceptance Criterion / Edge Case / Logic Error
+- Severity: Critical / High / Medium / Low
+- Location: file:line
+- Description: what the spec requires vs what was implemented
+- Fix: concrete code change
+
+After identifying issues, FIX THEM directly in the code.
+
+Return: list of findings, fixes applied, confirmation all tasks meet their specs
+""", subagent_type="general")
 ```
 
 ### Step 5c: Collect audit results and verify
 
-After both subagents complete:
+After all three subagents complete:
 1. Read their summaries
-2. Check for any conflicts between security and performance fixes
+2. Check for any conflicts between audit fixes (security vs performance vs spec)
 3. Run the test suite to ensure fixes don't break anything:
 
 ```bash
@@ -480,7 +510,7 @@ npm test 2>/dev/null || pytest 2>/dev/null || cargo test 2>/dev/null || go test 
 
 ```bash
 git add -A
-git commit -m "fix: address security and performance audit findings"
+git commit -m "fix: address security, performance, and spec compliance audit findings"
 ```
 
 ## Phase 6 — Open PR
@@ -569,7 +599,7 @@ Return: PR URL, review status summary, any remaining items
 After completion, report to user:
 - PR URL and title
 - Summary of all changes made
-- Security/performance audit results
+- Security, performance, and spec-compliance audit results
 - `review-pr-3x` tracking results
 - Any remaining items or follow-ups
 
@@ -582,7 +612,7 @@ After completion, report to user:
 | 3. Review | 1-2 | (review subagents) | Yes |
 | 4. Implement | N | `openspec-apply-change` + `using-git-worktrees` | Yes |
 | 4f. Update Docs | 1 | `documentation-and-adrs` | No |
-| 5. Audit | 2 | `owasp-security-review` + `performance-optimization` | Yes |
+| 5. Audit | 3 | `owasp-security-review` + `performance-optimization` + `code-review` | Yes |
 | 6. PR | 1 | `open-pr` | No |
 
 ## Error Handling
@@ -598,7 +628,7 @@ After completion, report to user:
 - Skip proposal review (leads to implementation gaps)
 - Implement without worktrees (causes merge conflicts)
 - Implement on `main` directly — always use dedicated worktree + branch
-- Skip security/performance audit (ships vulnerabilities)
+- Skip security/performance/spec-compliance audit (ships vulnerabilities, regressions, or incorrect implementations)
 - Skip documentation updates (future contributors lose context)
 - Create PR without tests passing (all tests MUST follow TDD — written before implementation code)
 
@@ -608,7 +638,8 @@ After completion, report to user:
 - Tasks too large for single worktree implementation
 - Tests written after implementation instead of TDD (test-first) approach
 - Implementation done on `main` instead of a dedicated branch/worktree
-- Security reviewer and performance reviewer conflict on same code
+- Security, performance, and spec-compliance reviewers conflict on same code
+- Spec-compliance reviewer cannot access OpenSpec artifacts
 - Merge conflicts during worktree consolidation
 - Documentation not updated after feature merge
 - PR created with failing CI
