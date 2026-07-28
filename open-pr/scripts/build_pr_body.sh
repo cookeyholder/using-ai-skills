@@ -54,23 +54,87 @@ collect_top_dirs() {
   done | sort -u | awk '{printf "%s%s",sep,$0; sep=", "} END{print ""}'
 }
 
-# 使用 git diff --name-status 一次取得所有檔案狀態，避免逐檔呼叫
+# 解析 git diff 產出語意化的變更描述
+# 支援 Markdown 章節標題、Shell 函式名稱、一般 hunk context
 generate_change_items() {
-  git diff --name-status "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" 2>/dev/null | while IFS=$'\t' read -r status file; do
+  git diff --no-renames --name-status "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" 2>/dev/null | while IFS=$'\t' read -r status file; do
     [[ -z "$file" ]] && continue
-    dir=$(dirname "$file")
-    filename=$(basename "$file")
+
+    local add_lines=0 del_lines=0
 
     case "$status" in
-      A) change_type="新增" ;;
-      D) change_type="刪除" ;;
-      M) change_type="修改" ;;
-      R*) change_type="重新命名" ;;
-      C*) change_type="複製" ;;
-      *) change_type="修改" ;;
+      A)
+        add_lines=$(wc -l < "$file" 2>/dev/null | tr -d ' ' || echo 0)
+        printf -- '- **%s**：新增檔案（%d 行）\n' "$file" "$add_lines"
+        continue
+        ;;
+      D)
+        printf -- '- **%s**：刪除檔案\n' "$file"
+        continue
+        ;;
     esac
 
-    printf -- '- **%s**：%s `%s`\n' "$dir" "$change_type" "$filename"
+    [[ "$status" != "M" ]] && continue
+
+    # 取得 diff 內容並計算增刪行數
+    local diff_output
+    diff_output=$(git diff "origin/${BASE_BRANCH}..${CURRENT_BRANCH}" -- "$file" 2>/dev/null || true)
+    add_lines=$(echo "$diff_output" | grep '^+' | grep -v '^+++' | wc -l | tr -d ' ')
+    del_lines=$(echo "$diff_output" | grep '^-' | grep -v '^---' | wc -l | tr -d ' ')
+
+    # 依檔案類型產出語意化描述
+    local desc="" ext="${file##*.}"
+
+    case "$ext" in
+      md|MD)
+        local added removed parts_add parts_del
+        added=$(echo "$diff_output" | grep '^+##' | sed 's/^+##*\s*//' | head -3 || true)
+        removed=$(echo "$diff_output" | grep '^-##' | sed 's/^-##*\s*//' | head -3 || true)
+        parts_del=(); parts_add=()
+        while IFS= read -r s; do [[ -n "$s" ]] && parts_del+=("移除「$s」"); done <<< "$removed"
+        while IFS= read -r s; do [[ -n "$s" ]] && parts_add+=("新增「$s」"); done <<< "$added"
+        if [[ ${#parts_del[@]} -gt 0 || ${#parts_add[@]} -gt 0 ]]; then
+          local all_parts=("${parts_del[@]}" "${parts_add[@]}")
+          local IFS='、'
+          desc="${all_parts[*]}"
+        fi
+        ;;
+      sh)
+        local funcs
+        funcs=$(echo "$diff_output" | grep '^+' | grep -oE '\b[a-zA-Z_][a-zA-Z0-9_]*\s*\(\)' | sed 's/\s*()//' | head -3 || true)
+        if [[ -n "$funcs" ]]; then
+          local IFS='、'
+          # shellcheck disable=SC2089
+          desc="函式 $(echo "$funcs" | paste -sd '、') 調整"
+        fi
+        ;;
+      py)
+        local funcs
+        funcs=$(echo "$diff_output" | grep '^+' | grep -oE '^\+[[:space:]]*(async\s+)?def\s+[a-zA-Z_][a-zA-Z0-9_]*' | sed 's/^+//' | sed 's/async //' | sed 's/def //' | head -3 || true)
+        if [[ -n "$funcs" ]]; then
+          desc="函式 $(echo "$funcs" | paste -sd '、') 調整"
+        fi
+        ;;
+      ts|tsx|js|jsx)
+        local funcs
+        funcs=$(echo "$diff_output" | grep '^+' | grep -oE '(export\s+)?(async\s+)?(function|const)\s+[a-zA-Z_][a-zA-Z0-9_]*' | sed 's/^+//' | grep -oE '[a-zA-Z_][a-zA-Z0-9_]*$' | head -3 || true)
+        if [[ -n "$funcs" ]]; then
+          desc="函式 $(echo "$funcs" | paste -sd '、') 調整"
+        fi
+        ;;
+    esac
+
+    # 無特定語意時，回退到 diff hunk context
+    if [[ -z "$desc" ]]; then
+      local ctx
+      ctx=$(echo "$diff_output" | grep '^@@' | sed 's/^@@[^@]*@@\s*//' | head -1 | grep -v '^$' || true)
+      if [[ -n "$ctx" ]]; then
+        desc=$(echo "$ctx" | sed 's/^\.//' | sed 's/[[:space:]]*$//' | head -c 80)
+      fi
+    fi
+
+    [[ -z "$desc" ]] && desc="內容調整"
+    printf -- '- **%s**：%s（+%d/-%d 行）\n' "$file" "$desc" "$add_lines" "$del_lines"
   done
 }
 
