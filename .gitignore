@@ -2,6 +2,8 @@
 .codex
 .gemini
 .copilot
+.agents/
+.claude/
 .antigravitycli/
 __pycache__/
 *.pyc

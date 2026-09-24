@@ -1,0 +1,225 @@
+/* 風格設定面板 — 與 tweaks.js 成對，由 scripts/stamp.py 在 verify 時注入頁尾（作者不用複製）。
+   字級與間距的倍率靠兩個變數：--fs（字級）、--dens（間距）。stamp.py 會把頁面裡寫死的
+   px 字級與間距改成 calc(原值 * var(--fs|--dens, 1))，這裡只負責「哪些區塊不吃倍率」。 */
+
+/* 不吃倍率：結構圖、畫面樣張（它們是示意畫面，照比例縮放才對）、頁面介面本身
+   （風格設定面板、評論工具、session 徽章；字放到 200% 時還得能把它調回來）、作者手動鎖定的區塊。
+   ⚠️ 要逐一列出，不能用「class 以 vt- 開頭」：評論工具會在 body 加 vt-has-existing-export，
+   前綴比對會把整頁鎖死；被評論標記的文字（vt-comment-mark）也該跟著內文縮放。 */
+svg,
+.mock,
+[data-tw-lock],
+.vt-tw-root,
+.vt-comment-trigger,
+.vt-comment-popup,
+.vt-comment-pill,
+.vt-comment-list,
+.vt-session-badge {
+  --fs: 1;
+  --dens: 1;
+}
+/* 沒宣告字級的頁面（spec-alignment 範本就是）：零權重，任何頁面規則都蓋得過它 */
+:where(body) {
+  font-size: calc(16px * var(--fs, 1));
+}
+/* Tailwind 文字 class 的覆寫由 stamp.py 視頁面需要產生（只在有 Tailwind、倍率≠1 時生效），不放這裡 */
+
+/* ── 面板本體（按鈕與面板都掛 vt-tw-root → 在上面的排除清單裡，不吃倍率）── */
+/* 沒有底部列可停的頁：浮在左下角（右下角是評論工具） */
+.vt-tw-launch {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 9100;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font: 600 12px var(--sans, system-ui, sans-serif);
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--slate, #141413);
+  background: var(--slate, #141413);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(20, 20, 19, 0.2);
+}
+.vt-tw-launch svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+/* 停在底部列「預覽摘要」左邊：外觀跟旁邊的次要按鈕一致，各寬度都停（窄螢幕只顯示圖示，見檔尾） */
+.vt-tw-launch.vt-tw-docked {
+  position: static;
+  display: inline-flex; /* 父層是一般區塊時才不會獨佔一行、把列撐高 */
+  font: 500 14px var(--sans, system-ui, sans-serif);
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--g300, #d1cfc5);
+  background: #fff;
+  color: var(--slate, #141413);
+  box-shadow: none;
+}
+.vt-tw-launch.vt-tw-docked:hover {
+  border-color: var(--slate, #141413);
+}
+/* 位置（bottom、left／right、max-height）由 tweaks.js 依按鈕位置算 */
+.vt-tw-pop {
+  position: fixed;
+  width: min(330px, 92vw);
+  overflow: auto;
+  z-index: 9100;
+  background: #fff;
+  color: var(--slate, #141413);
+  border: 1.5px solid var(--g300, #d1cfc5);
+  border-radius: 12px;
+  box-shadow: 0 16px 44px rgba(20, 20, 19, 0.22);
+  padding: 14px 16px 16px;
+  font: 13px/1.5 var(--sans, system-ui, sans-serif);
+  text-align: left;
+}
+.vt-tw-pop[hidden] {
+  display: none;
+}
+.vt-tw-sec {
+  font: 600 10.5px var(--mono, ui-monospace, monospace);
+  color: var(--g500, #87867f);
+  letter-spacing: 0.06em;
+  margin: 12px 0 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--g200, #e6e3da);
+}
+.vt-tw-sec.vt-tw-first {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/* 中英切換：面板頂端那行的右邊 */
+.vt-tw-lang {
+  font: 600 11px var(--sans, system-ui, sans-serif);
+  letter-spacing: 0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1.5px solid var(--g300, #d1cfc5);
+  background: #fff;
+  color: var(--g700, #3d3d3a);
+  cursor: pointer;
+}
+.vt-tw-lang:hover {
+  border-color: var(--slate, #141413);
+}
+.vt-tw-item {
+  margin: 8px 0;
+}
+.vt-tw-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.vt-tw-val {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-weight: 500;
+  color: var(--clay-d, #b85c3e);
+}
+.vt-tw-item input[type="range"] {
+  width: 100%;
+  accent-color: var(--clay, #d97757);
+}
+.vt-tw-seg {
+  display: flex;
+  border: 1.5px solid var(--g300, #d1cfc5);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.vt-tw-seg button {
+  flex: 1;
+  font: 12.5px var(--sans, system-ui, sans-serif);
+  padding: 5px 4px;
+  border: 0;
+  border-right: 1px solid var(--g300, #d1cfc5);
+  background: #fff;
+  color: var(--g700, #3d3d3a);
+  cursor: pointer;
+}
+.vt-tw-seg button:last-child {
+  border-right: 0;
+}
+.vt-tw-seg button.vt-tw-on {
+  background: var(--slate, #141413);
+  color: #fff;
+}
+.vt-tw-hint {
+  font-size: 11.5px;
+  color: var(--g500, #87867f);
+  line-height: 1.5;
+  margin-top: 5px;
+}
+.vt-tw-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+.vt-tw-actions button {
+  flex: 1;
+  font: 12.5px var(--sans, system-ui, sans-serif);
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: 1.5px solid var(--g300, #d1cfc5);
+  background: #fff;
+  cursor: pointer;
+}
+.vt-tw-actions button.vt-tw-pri {
+  border-color: var(--clay, #d97757);
+  color: var(--clay-d, #b85c3e);
+  font-weight: 600;
+}
+.vt-tw-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.vt-tw-manual {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 6px 8px;
+  font: 11px/1.5 var(--mono, ui-monospace, monospace);
+  border: 1.5px solid var(--g300, #d1cfc5);
+  border-radius: 8px;
+  resize: vertical;
+}
+.vt-tw-manual[hidden] {
+  display: none;
+}
+.vt-tw-actions button[aria-pressed="true"] {
+  background: var(--clay-d, #b85c3e);
+  border-color: var(--clay-d, #b85c3e);
+  color: #fff;
+}
+@media (max-width: 760px) {
+  .vt-tw-launch {
+    padding: 8px;
+  }
+  .vt-tw-lbl {
+    display: none; /* 手機只留圖示，少蓋一點內容 */
+  }
+}
+/* 範本底部列在 900px 以下擠不下帶字的第三顆鈕：只留圖示、縮內距，高度跟旁邊的按鈕拉齊。
+   約 360px 以下、以及 700px 前後一小段寬度，列仍可能折成兩行（範圍依列上的文字與按鈕字數而定；等於更窄螢幕的版型），接受 */
+@media (max-width: 900px) {
+  .vt-tw-docked .vt-tw-lbl {
+    display: none;
+  }
+  .vt-tw-launch.vt-tw-docked {
+    padding: 10px 11px;
+    align-self: stretch;
+  }
+}
