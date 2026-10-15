@@ -1,7 +1,7 @@
 # open-pr 改善設計稿
 
 ## 目的
-在目前 `open-pr` skill 上加強「PR 內容自動補模板」與「發布前驗證」，讓使用者能更快速、可靠地產生符合格式、敘述切題、無殘留 placeholder 的 Pull Request，並保持 `review-pr-3x` 的追蹤流程。
+在目前 `open-pr` skill 上加強「PR 內容自動補模板」與「發布前驗證」，讓使用者能更快速、可靠地產生符合格式、敘述切題、無殘留 placeholder 的 Pull Request，並保持 `review-pr-2x` 的追蹤流程。
 
 ## 自動填模板的資料來源與策略
 1. **commit log**：取最近 1~3 個 commit 的標題與第一行內文，摘出動詞與主要對象，作為 `<類型>`、## 變更摘要與## 主要變更項目的初步內容。
@@ -24,7 +24,7 @@
 1. 先抓取 `CURRENT_BRANCH`、`BASE_BRANCH`、`COMMIT_SUMMARY`、`DIFF_FILES`、`ISSUE`。
 2. 呼叫 helper 生 `pr_body.md`，同時記錄 `auto_keywords`、`auto_title_hint`。
 3. 依序執行檢查（placeholder → 測試敘述 → keyword match → newline literal），若某步失敗，印出 Diagnostics 並中止。
-4. 通過後再執行 `gh pr create`，最後觸發 `review-pr-3x`。
+4. 通過後再執行 `gh pr create`，最後觸發 `review-pr-2x`。
 
 ## 使用者呈現與訊息
 - 在每项檢查失敗時都提供中文錯誤提示，說明哪一段需要重填並建議的修改方式。

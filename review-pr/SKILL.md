@@ -5,10 +5,10 @@ license: MIT
 compatibility: Requires GitHub CLI (gh).
 metadata:
   author: local
-  version: "1.3"
+  version: "1.15"
 ---
 
-Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run `review-fix` validation, then commit and push updates.
+Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run lightweight `review-fix` validation, then commit and push updates.
 
 **Input**: Optional PR number or URL (e.g., `review-pr 19`).
 If omitted, infer from current branch. If ambiguous, show candidate PRs and ask user to choose.
@@ -34,26 +34,54 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
      gh pr view <pr> --json state --jq .state
      ```
      If state is not `OPEN`, stop and report.
+   - **Normalize to explicit repository, number, and host** for later REST/GraphQL calls (`pull_number` must be an integer, and `{owner}`/`{repo}` would otherwise resolve to the current directory's repository even when the input URL belongs to a different one):
+     ```bash
+     gh pr view <pr> --json url --jq '.url | capture("^https?://(?<host>[^/]+)/(?<owner>[^/]+)/(?<repo>[^/]+)/pull/(?<number>[0-9]+)$")'
+     ```
+     Use `<owner>/<repo>` as `<owner_repo>` and the captured `number` as `<pr_number>` in all `gh api` calls below; for GitHub Enterprise hosts other than `github.com`, add `--hostname <host>` to each `gh api` call. `gh pr` commands still accept the original input; `gh run` commands must use the captured repository via `-R` (see step 3).
+   - **Verify the local worktree matches the selected PR** before any edits (steps 4–7 operate on the current checkout and push to its remote):
+     ```bash
+     gh repo view --json nameWithOwner --jq .nameWithOwner
+     git branch --show-current
+     gh pr view <pr> --json headRefName,headRefOid,isCrossRepository,headRepository --jq '{branch: .headRefName, head: .headRefOid, fork: .isCrossRepository, head_repo: .headRepository.nameWithOwner}'
+     ```
+     - Stop and ask the user when the checkout repository matches neither `<owner_repo>` nor (for `fork: true`) `head_repo`: running `gh pr checkout <pr>` from the wrong repository only fetches the foreign PR ref into this unrelated checkout. Continue only from an actual checkout of the correct repository (clone/change directory, then re-run this verification).
+     - If the repository matches but the current branch differs from the PR's `headRefName`, switch to the PR branch (`gh pr checkout <pr>`, fetching first); if that is not possible (dirty worktree), stop and ask the user.
+     - If the branch name matches but HEAD is behind `headRefOid`, refresh it; prefer `git pull --ff-only`. Only use `gh pr checkout <pr> --force` (which performs a hard reset) when the index and worktree are fully clean (`git status --porcelain` is empty) or after the user explicitly approves a stash — never discard uncommitted changes silently.
+     - If local is simply ahead of `headRefOid` with this PR's unpushed commits, keep them local — do not push before validation; steps 5–6 must cover them and step 7 pushes everything together.
+     - If the branch has diverged from the PR head (both local and PR head gained commits since the merge base), stop and ask the user whether to rebase or merge before editing — never reconcile divergence implicitly. After any synchronization, re-verify HEAD against `headRefOid` (or the local-ahead state).
+     - For fork PRs (`fork: true`), confirm the configured push remote targets the PR's head repository and host (`git remote -v` vs `head_repo`); otherwise stop and ask the user.
+     - Never apply fixes to an unrelated repository or branch.
 
 2. **Collect review feedback**
    ```bash
    gh pr view <pr> --json reviews,latestReviews,comments,files,headRefName,baseRefName,url
+   gh api "repos/<owner_repo>/pulls/<pr_number>/comments" --paginate
+   gh api graphql --paginate -F owner="<owner>" -F repo="<repo>" -F pr=<pr_number> -f query='
+     query($owner:String!,$repo:String!,$pr:Int!,$endCursor:String) {
+       repository(owner:$owner,name:$repo){ pullRequest(number:$pr){
+         reviewThreads(first:100, after:$endCursor){ pageInfo{hasNextPage endCursor}
+           nodes { isResolved isOutdated
+             comments(first:100){ nodes { path line body } } } } } }
+     }' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved==false and .isOutdated==false) | .comments.nodes[] | {path, line, body}'
    ```
+   - `gh pr view --json comments` only returns general PR comments; the `gh api .../pulls/<pr_number>/comments` call captures inline (file/line) comments, but the REST endpoint does not expose thread resolution state — use the paginated GraphQL `reviewThreads` query (`$endCursor`/`pageInfo`, each thread's comments via `comments(first:100)`) to exclude resolved/outdated threads and include reviewer replies before creating work items; add nested pagination if a single thread exceeds 100 replies.
    Build an actionable review list:
    - Include concrete requested changes and blocking issues
-   - Exclude pure summaries, non-actionable praise, and duplicate threads
-   - Keep file/line context when available
+   - Include inline review comments with their file/line context (from the calls above)
+   - Exclude pure summaries, non-actionable praise, resolved/outdated threads, and duplicates
 
 3. **Monitor CI status and failures**
    ```bash
    gh pr checks <pr> --watch
-   gh run list --limit 10 --json databaseId,headBranch,status,conclusion,workflowName,createdAt
+   gh run list -R <owner_repo> --limit 10 --json databaseId,headBranch,status,conclusion,workflowName,createdAt
    ```
+   - `gh pr checks` resolves the repository from the PR input, but `gh run` commands do not receive it — always pass `-R <owner_repo>` (prefix with the host for GitHub Enterprise: `-R <host>/<owner>/<repo>`) so workflow runs are read from the selected PR's repository.
    - Determine if any required checks are failing/pending.
    - For failed checks, find the latest run and inspect failing job logs:
    ```bash
-   gh run view <run_id> --json jobs
-   gh run view <run_id> --job <job_id> --log-failed
+   gh run view -R <owner_repo> <run_id> --json jobs
+   gh run view -R <owner_repo> <run_id> --job <job_id> --log-failed
    ```
    - Convert CI failures into actionable fix items.
 
@@ -76,18 +104,20 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
    - If either command reports conflicts, stop and resolve all conflicting files first.
    - Do not run commit/push until conflict output is empty.
 
-6. **Run `review-fix` before commit/push (mandatory)**
-   - After coding fixes are done, run one `review-fix` pass on the updated workspace.
-   - If `review-fix` finds additional issues, implement the required follow-up fixes first.
-   - Repeat until there are no unresolved actionable findings from this validation pass.
+6. **Run lightweight `review-fix` validation before commit/push (mandatory)**
+   - After coding fixes are done, run the `review-fix` skill in its **lightweight validation mode** (see `review-fix` 附錄 B): it reviews only the PR's changed files and runs affected tests/lint.
+   - Do NOT trigger the full review-fix pipeline here: no branch creation, no OpenSpec change, no full P0-P3 report, no doc consolidation, no PR prompt.
+   - If it reports actionable findings, implement the required follow-up fixes and repeat until none remain.
    - Do not commit or push before this step is complete.
 
 7. **Commit, push, and re-verify PR**
    ```bash
-   git add -u
+   git status --porcelain
+   git add <files changed by the fixes>
    git commit -m "<clear message for the fixes>"
    git push
    ```
+   - Stage only the files created or modified for the actionable items; do not use `git add -A`/`git add .` (avoids committing unrelated or sensitive local changes).
    Then verify:
    ```bash
    gh pr checks <pr> --watch
@@ -100,15 +130,16 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
    - Which review items were fixed
    - Which CI failures were fixed
    - Conflict-file check result
-   - `review-fix` validation result and any extra issues it caught
+   - Lightweight `review-fix` validation result and any extra issues it caught
    - Commits added
    - Current checks/review state
    - Remaining blockers (if any)
 
 ## Guardrails
 - Do not rewrite unrelated code.
+- Never edit or push in a worktree that does not match the selected PR's repository.
 - If a review comment is unclear or conflicts with spec/requirements, pause and ask user.
 - If there are no actionable review comments, still check CI and fix CI failures if present.
 - If review is clean and CI is green, explicitly state no action is needed.
 - Conflict-file checks are required before every commit/push in this workflow.
-- `review-fix` validation is required before every commit/push in this workflow.
+- Lightweight `review-fix` validation (changed-files review + affected tests/lint) is required before every commit/push in this workflow.
