@@ -3,7 +3,7 @@ name: review-fix
 description: 全方位進行專案程式碼審查，產生詳細且清楚的審查報告，並根據報告自動建立 OpenSpec change 的所有提案文件，用來規劃並修復所有發現的問題。另支援供 review-pr 等流程呼叫的輕量驗證模式。
 license: MIT
 metadata:
-    version: "2.0"
+    version: "2.1"
     # disable-model-invocation: true is intentionally omitted because
     # other skills (review-pr, refactor-django, etc.) may trigger this
     # skill via description matching when users request code reviews.
@@ -139,12 +139,12 @@ metadata:
 
 6. **確保測試綠燈 (Ensure Tests / CI Pass)：** **必須**執行並通過專案內所有的測試，或確認 CI 流程成功完成，證明修復成果沒有破壞任何既有功能。執行測試前，請先從專案設定檔自動發現測試指令（依序檢查 `package.json` → `pyproject.toml` → `Cargo.toml` → `Makefile`）。
 
-7. **停止條件（迭代上限）：**
-    - 最多迭代 3 輪，避免無限循環。
-    - 若連續 2 輪無新增 P0/P1 問題，或僅剩 P3 非阻斷項，即可結束並彙整後續改善項目。
+7. **停止條件：**
+    - **成功停止：** 連續 2 輪無新增 P0/P1 問題，且無任何未解決的 P0-P2（僅剩 P3 非阻斷項視為通過）→ 進入後續文件更新與歸檔步驟。
+    - **上限停止：** 最多迭代 3 輪。若達到上限仍有未解決的 P0-P2，停止迭代並輸出剩餘阻斷項清單與建議，**不得視為修復完成**，不進入文件整併與歸檔完成宣告。
     - **單輪超時控制：** 每輪修復設定最長執行時間（如 30 分鐘）。若該輪修復在時間內未完成，先輸出當前進度（已修復項目與未修復項目），然後依停止條件判斷是否進入下一輪。
 
-8. **更新專案文件 (Update Documentation)：** 當停止條件成立（僅剩 P3 亦視為通過）且所有測試 PASS 後，**必須**盤點受影響的業務邏輯、設定或 API 介面，並相應地自動更新：
+8. **更新專案文件 (Update Documentation)：** 當「成功停止」條件成立且所有測試 PASS 後，**必須**盤點受影響的業務邏輯、設定或 API 介面，並相應地自動更新：
     - 專案根目錄的 `README.md`。
     - 專案內 `docs/` 資料夾（或其他專用文件資料夾）中的相關文件與架構圖說明，確保文件與最新的程式碼實作保持絕對一致。
     - 若修補結果有「值得提醒使用者」的操作、安全、部署或相容性注意事項，**必須**寫入現有文件（例如 README 或對應 `docs/*`），不得只留在對話訊息中。
@@ -193,7 +193,7 @@ Worker 模板：
 
 **執行範圍：**
 
-1. 只審查本次改動範圍（相對 PR/分支 base 的變更檔案，例如 `git diff <base>...HEAD --name-only`），聚焦：正確性、安全性、測試覆蓋，以及是否夾帶與本次範圍無關的改動。
+1. 只審查本次改動範圍，且**必須涵蓋尚未提交的變更**（例如並用 `git diff <base>...HEAD --name-only` 與 `git diff HEAD --name-only`），聚焦：正確性、安全性、測試覆蓋，以及是否夾帶與本次範圍無關的改動。
 2. 執行受影響範圍的測試與 lint（測試指令的發現順序同階段三第 6 點）。
 3. 輸出可執行的 findings 清單（含檔案:行號、嚴重度、建議修法）。
 4. 若發現問題，修正後重跑本模式，直到沒有未解決的 actionable findings。

@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires GitHub CLI (gh).
 metadata:
   author: local
-  version: "1.4"
+  version: "1.5"
 ---
 
 Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run lightweight `review-fix` validation, then commit and push updates.
@@ -34,13 +34,18 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
      gh pr view <pr> --json state --jq .state
      ```
      If state is not `OPEN`, stop and report.
+   - **Normalize to a numeric PR number** for later REST API calls (`pull_number` must be an integer, URLs are not accepted):
+     ```bash
+     gh pr view <pr> --json number --jq .number
+     ```
+     Use this value as `<pr_number>` in all `gh api` calls below. `gh pr`/`gh run` commands still accept the original input.
 
 2. **Collect review feedback**
    ```bash
    gh pr view <pr> --json reviews,latestReviews,comments,files,headRefName,baseRefName,url
-   gh api "repos/{owner}/{repo}/pulls/<pr>/comments" --paginate
+   gh api "repos/{owner}/{repo}/pulls/<pr_number>/comments" --paginate
    ```
-   - `gh pr view --json comments` only returns general PR comments; the `gh api .../pulls/<pr>/comments` call is required to capture inline (file/line) review comments.
+   - `gh pr view --json comments` only returns general PR comments; the `gh api .../pulls/<pr_number>/comments` call is required to capture inline (file/line) review comments.
    Build an actionable review list:
    - Include concrete requested changes and blocking issues
    - Include inline review comments with their file/line context (from the API call above)
@@ -86,10 +91,12 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
 
 7. **Commit, push, and re-verify PR**
    ```bash
-   git add -A
+   git status --porcelain
+   git add <files changed by the fixes>
    git commit -m "<clear message for the fixes>"
    git push
    ```
+   - Stage only the files created or modified for the actionable items; do not use `git add -A`/`git add .` (avoids committing unrelated or sensitive local changes).
    Then verify:
    ```bash
    gh pr checks <pr> --watch
