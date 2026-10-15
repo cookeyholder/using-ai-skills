@@ -3,7 +3,7 @@ name: review-fix
 description: 全方位進行專案程式碼審查，產生詳細且清楚的審查報告，並根據報告自動建立 OpenSpec change 的所有提案文件，用來規劃並修復所有發現的問題。另支援供 review-pr 等流程呼叫的輕量驗證模式。
 license: MIT
 metadata:
-    version: "2.2"
+    version: "2.3"
     # disable-model-invocation: true is intentionally omitted because
     # other skills (review-pr, refactor-django, etc.) may trigger this
     # skill via description matching when users request code reviews.
@@ -109,7 +109,7 @@ metadata:
     - **Tasks (`tasks.md`)**：執行 `openspec instructions tasks --change "<change-name>"`。將修復設計拆解為具體、細粒度可執行的開發與測試步驟，並包含驗收標準 (AC)。
 
 3. **OpenSpec CLI 不可用時的備援：**
-   若目標專案未導入 OpenSpec CLI，跳過上述 `openspec` 指令，改以 bootstrap 產生的 `docs/OPENSPEC_REVIEW_FIX_PLAN.md` 保存提案內容；後續階段中所有 `openspec` 相關動作（apply、archive）對應改為人工執行或略過。
+   若目標專案未導入 OpenSpec CLI，跳過上述 `openspec` 指令，並在 `docs/OPENSPEC_REVIEW_FIX_PLAN.md` 中補齊與 proposal/design/tasks 等價的內容（**必須包含具體、細粒度的修復任務清單與驗收標準**，不得只留指令與檢查表）；後續階段以該文件的任務清單取代 `tasks.md` 作為實作依據，所有 `openspec` 相關動作（apply、archive）改為人工執行或略過。
 
 ## 階段三：迭代修復循環
 
@@ -131,7 +131,7 @@ metadata:
 
    **降級策略：** subagent 不可用時，依 `tasks.md` 順序由主 agent 逐項修復與測試。
 
-3. **自動二次審查：** 當一輪的修復任務完成後，必須**自動**重跑階段一、二，對修復後的程式碼進行嚴格的二次審查。
+3. **自動二次審查：** 當一輪的修復任務完成後，必須**自動**重跑階段一做嚴格二次審查；**只有當審查發現需修復的問題時，才接著執行階段二建立新一輪提案**。
 
 4. **進入下一輪：** 若發現新的問題、未完全修復的舊問題，或是不符合 Clean Code 與效能標準的實作，則產生新的審查報告，並自動建立下一輪的 OpenSpec change 修復任務（如 `fixes-iteration-2`），然後回到第 1 步繼續自動實作。若本輪審查乾淨但尚未滿足「連續 2 輪無新增 P0/P1」的成功條件，則不建立新 change，直接重複本階段的審查與測試步驟，直到成功條件滿足或達到 3 輪上限。
 
@@ -140,7 +140,7 @@ metadata:
 6. **確保測試綠燈 (Ensure Tests / CI Pass)：** **必須**執行並通過專案內所有的測試，或確認 CI 流程成功完成，證明修復成果沒有破壞任何既有功能。執行測試前，請先從專案設定檔自動發現測試指令（依序檢查 `package.json` → `pyproject.toml` → `Cargo.toml` → `Makefile`）。
 
 7. **停止條件：**
-    - **成功停止：** 連續 2 輪無新增 P0/P1 問題，且無任何未解決的 P0-P2（僅剩 P3 非阻斷項視為通過）→ 進入後續文件更新與歸檔步驟。
+    - **成功停止：** 連續 2 輪無新增 P0/P1 問題，且無任何未解決的 P0-P2（僅剩 P3 非阻斷項視為通過）。若於第 3 輪上限時最終審查乾淨且無未解決 P0-P2，亦視為有條件成功（須於輸出註明未達成連續 2 輪）→ 進入後續文件更新與歸檔步驟。
     - **上限停止：** 最多迭代 3 輪。若達到上限仍有未解決的 P0-P2，停止迭代並輸出剩餘阻斷項清單與建議，**不得視為修復完成**，不進入文件整併與歸檔完成宣告。
     - **單輪超時控制：** 每輪修復設定最長執行時間（如 30 分鐘）。若該輪修復在時間內未完成，先輸出當前進度（已修復項目與未修復項目），然後依停止條件判斷是否進入下一輪。
 
