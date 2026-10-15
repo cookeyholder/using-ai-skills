@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires GitHub CLI (gh).
 metadata:
   author: local
-  version: "1.14"
+  version: "1.15"
 ---
 
 Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run lightweight `review-fix` validation, then commit and push updates.
@@ -45,10 +45,11 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
      git branch --show-current
      gh pr view <pr> --json headRefName,headRefOid,isCrossRepository,headRepository --jq '{branch: .headRefName, head: .headRefOid, fork: .isCrossRepository, head_repo: .headRepository.nameWithOwner}'
      ```
-     - If the repository differs from `<owner_repo>`, stop and ask the user — running `gh pr checkout <pr>` from the wrong repository only fetches the foreign PR ref into this unrelated checkout. Continue only from an actual checkout of the correct repository (clone/change directory, then re-run this verification).
+     - Stop and ask the user when the checkout repository matches neither `<owner_repo>` nor (for `fork: true`) `head_repo`: running `gh pr checkout <pr>` from the wrong repository only fetches the foreign PR ref into this unrelated checkout. Continue only from an actual checkout of the correct repository (clone/change directory, then re-run this verification).
      - If the repository matches but the current branch differs from the PR's `headRefName`, switch to the PR branch (`gh pr checkout <pr>`, fetching first); if that is not possible (dirty worktree), stop and ask the user.
      - If the branch name matches but HEAD is behind `headRefOid`, refresh it; prefer `git pull --ff-only`. Only use `gh pr checkout <pr> --force` (which performs a hard reset) when the index and worktree are fully clean (`git status --porcelain` is empty) or after the user explicitly approves a stash — never discard uncommitted changes silently.
-     - If local is ahead of `headRefOid` with this PR's unpushed commits, keep them local — do not push before validation; steps 5–6 must cover them and step 7 pushes everything together.
+     - If local is simply ahead of `headRefOid` with this PR's unpushed commits, keep them local — do not push before validation; steps 5–6 must cover them and step 7 pushes everything together.
+     - If the branch has diverged from the PR head (both local and PR head gained commits since the merge base), stop and ask the user whether to rebase or merge before editing — never reconcile divergence implicitly. After any synchronization, re-verify HEAD against `headRefOid` (or the local-ahead state).
      - For fork PRs (`fork: true`), confirm the configured push remote targets the PR's head repository and host (`git remote -v` vs `head_repo`); otherwise stop and ask the user.
      - Never apply fixes to an unrelated repository or branch.
 
