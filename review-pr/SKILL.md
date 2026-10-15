@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires GitHub CLI (gh).
 metadata:
   author: local
-  version: "1.11"
+  version: "1.12"
 ---
 
 Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run lightweight `review-fix` validation, then commit and push updates.
@@ -42,8 +42,12 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
    - **Verify the local worktree matches the selected PR** before any edits (steps 4–7 operate on the current checkout and push to its remote):
      ```bash
      gh repo view --json nameWithOwner --jq .nameWithOwner
+     git branch --show-current
+     gh pr view <pr> --json headRefName,headRefOid --jq '{branch: .headRefName, head: .headRefOid}'
      ```
-     If it differs from `<owner_repo>`, check out the correct repository/worktree (e.g., `gh pr checkout <pr>` when remotes allow) or stop and ask the user — never apply fixes to an unrelated repository.
+     - If the repository differs from `<owner_repo>`, or the current branch differs from the PR's `headRefName`, switch to the PR branch (`gh pr checkout <pr>`, fetching first). If checkout is not possible (no matching remote, dirty worktree), stop and ask the user.
+     - After checkout, confirm `git rev-parse HEAD` matches the PR's `headRefOid` (or that local commits are this PR's unpushed work — push them first); otherwise stop and report.
+     - Never apply fixes to an unrelated repository or branch.
 
 2. **Collect review feedback**
    ```bash
