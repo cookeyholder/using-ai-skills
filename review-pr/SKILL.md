@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires GitHub CLI (gh).
 metadata:
   author: local
-  version: "1.9"
+  version: "1.10"
 ---
 
 Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run lightweight `review-fix` validation, then commit and push updates.
@@ -38,7 +38,7 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
      ```bash
      gh pr view <pr> --json url --jq '.url | capture("^https?://(?<host>[^/]+)/(?<owner>[^/]+)/(?<repo>[^/]+)/pull/(?<number>[0-9]+)$")'
      ```
-     Use `<owner>/<repo>` as `<owner_repo>` and the captured `number` as `<pr_number>` in all `gh api` calls below; for GitHub Enterprise hosts other than `github.com`, add `--hostname <host>` to each `gh api` call. `gh pr`/`gh run` commands still accept the original input.
+     Use `<owner>/<repo>` as `<owner_repo>` and the captured `number` as `<pr_number>` in all `gh api` calls below; for GitHub Enterprise hosts other than `github.com`, add `--hostname <host>` to each `gh api` call. `gh pr` commands still accept the original input; `gh run` commands must use the captured repository via `-R` (see step 3).
 
 2. **Collect review feedback**
    ```bash
@@ -61,13 +61,14 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
 3. **Monitor CI status and failures**
    ```bash
    gh pr checks <pr> --watch
-   gh run list --limit 10 --json databaseId,headBranch,status,conclusion,workflowName,createdAt
+   gh run list -R <owner_repo> --limit 10 --json databaseId,headBranch,status,conclusion,workflowName,createdAt
    ```
+   - `gh pr checks` resolves the repository from the PR input, but `gh run` commands do not receive it — always pass `-R <owner_repo>` (prefix with the host for GitHub Enterprise: `-R <host>/<owner>/<repo>`) so workflow runs are read from the selected PR's repository.
    - Determine if any required checks are failing/pending.
    - For failed checks, find the latest run and inspect failing job logs:
    ```bash
-   gh run view <run_id> --json jobs
-   gh run view <run_id> --job <job_id> --log-failed
+   gh run view -R <owner_repo> <run_id> --json jobs
+   gh run view -R <owner_repo> <run_id> --job <job_id> --log-failed
    ```
    - Convert CI failures into actionable fix items.
 
