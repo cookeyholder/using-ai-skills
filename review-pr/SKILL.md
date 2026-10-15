@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires GitHub CLI (gh).
 metadata:
   author: local
-  version: "1.12"
+  version: "1.13"
 ---
 
 Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run lightweight `review-fix` validation, then commit and push updates.
@@ -43,10 +43,12 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
      ```bash
      gh repo view --json nameWithOwner --jq .nameWithOwner
      git branch --show-current
-     gh pr view <pr> --json headRefName,headRefOid --jq '{branch: .headRefName, head: .headRefOid}'
+     gh pr view <pr> --json headRefName,headRefOid,isCrossRepository,headRepository --jq '{branch: .headRefName, head: .headRefOid, fork: .isCrossRepository, head_repo: .headRepository.nameWithOwner}'
      ```
      - If the repository differs from `<owner_repo>`, or the current branch differs from the PR's `headRefName`, switch to the PR branch (`gh pr checkout <pr>`, fetching first). If checkout is not possible (no matching remote, dirty worktree), stop and ask the user.
-     - After checkout, confirm `git rev-parse HEAD` matches the PR's `headRefOid` (or that local commits are this PR's unpushed work — push them first); otherwise stop and report.
+     - If the branch name matches but HEAD is behind `headRefOid`, refresh the branch safely before proceeding (`gh pr checkout <pr> --force`, or `git pull --ff-only`); stop only when the branch has diverged and cannot be fast-forwarded.
+     - If local is ahead of `headRefOid` with this PR's unpushed commits, keep them local — do not push before validation; steps 5–6 must cover them and step 7 pushes everything together.
+     - For fork PRs (`fork: true`), confirm the configured push remote targets the PR's head repository and host (`git remote -v` vs `head_repo`); otherwise stop and ask the user.
      - Never apply fixes to an unrelated repository or branch.
 
 2. **Collect review feedback**
