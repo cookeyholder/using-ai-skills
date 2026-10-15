@@ -3,7 +3,7 @@ name: review-fix
 description: 全方位進行專案程式碼審查，產生詳細且清楚的審查報告，並根據報告自動建立 OpenSpec change 的所有提案文件，用來規劃並修復所有發現的問題。另支援供 review-pr 等流程呼叫的輕量驗證模式。
 license: MIT
 metadata:
-    version: "2.3"
+    version: "2.4"
     # disable-model-invocation: true is intentionally omitted because
     # other skills (review-pr, refactor-django, etc.) may trigger this
     # skill via description matching when users request code reviews.
@@ -48,7 +48,8 @@ metadata:
 
     若任一掃描回報 `CRITICAL` 漏洞，需先記錄至審查報告再進行修復。
 
-4. **提交紀律（橫向規範，適用全程）：**
+4. **提交紀律（橫向規範，完整模式適用）：**
+    - **輕量驗證模式不套用本節規範**：驗證期間不得自行 commit；commit 由呼叫端流程（如 review-pr 步驟 7）負責。
     - **高頻提交（Small-Batch Commits）**：每完成一個小階段就立即提交，不可累積大量變更才一次提交。
     - 小階段範例：完成一個漏洞修補、完成一組對應測試、完成一份 OpenSpec artifact、完成一輪文件整併。
     - 每筆 commit 訊息需清楚描述該小階段目的與影響範圍；建議前綴順序：`fix:`（漏洞修補）→ `test:`（測試補強）→ `docs:`（報告與文件同步）→ `chore:`（文件整併/歸檔與收尾）。
@@ -198,6 +199,6 @@ Worker 模板：
 3. 輸出可執行的 findings 清單（含檔案:行號、嚴重度、建議修法）。
 4. 若發現問題，修正後重跑本模式，直到沒有未解決的 actionable findings。
 
-**明確排除（避免與 PR 流程衝突）：** 不切換或建立新分支、不建立 OpenSpec change、不產生 P0-P3 完整審查報告、不做文件整併、不詢問發起 PR、不啟動子代理平行化（除非呼叫者明確要求）。
+**明確排除（避免與 PR 流程衝突）：** 不切換或建立新分支、不建立 OpenSpec change、不產生 P0-P3 完整審查報告、不做文件整併、不自行 commit（由呼叫端流程負責）、不詢問發起 PR、不啟動子代理平行化（除非呼叫者明確要求）。
 
 輕量模式驗證通過後，呼叫端流程（如 `review-pr` 步驟 6）即可繼續進行 commit/push。

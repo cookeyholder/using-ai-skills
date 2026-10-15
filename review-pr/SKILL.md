@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires GitHub CLI (gh).
 metadata:
   author: local
-  version: "1.10"
+  version: "1.11"
 ---
 
 Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run lightweight `review-fix` validation, then commit and push updates.
@@ -39,6 +39,11 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
      gh pr view <pr> --json url --jq '.url | capture("^https?://(?<host>[^/]+)/(?<owner>[^/]+)/(?<repo>[^/]+)/pull/(?<number>[0-9]+)$")'
      ```
      Use `<owner>/<repo>` as `<owner_repo>` and the captured `number` as `<pr_number>` in all `gh api` calls below; for GitHub Enterprise hosts other than `github.com`, add `--hostname <host>` to each `gh api` call. `gh pr` commands still accept the original input; `gh run` commands must use the captured repository via `-R` (see step 3).
+   - **Verify the local worktree matches the selected PR** before any edits (steps 4–7 operate on the current checkout and push to its remote):
+     ```bash
+     gh repo view --json nameWithOwner --jq .nameWithOwner
+     ```
+     If it differs from `<owner_repo>`, check out the correct repository/worktree (e.g., `gh pr checkout <pr>` when remotes allow) or stop and ask the user — never apply fixes to an unrelated repository.
 
 2. **Collect review feedback**
    ```bash
@@ -124,6 +129,7 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
 
 ## Guardrails
 - Do not rewrite unrelated code.
+- Never edit or push in a worktree that does not match the selected PR's repository.
 - If a review comment is unclear or conflicts with spec/requirements, pause and ask user.
 - If there are no actionable review comments, still check CI and fix CI failures if present.
 - If review is clean and CI is green, explicitly state no action is needed.
