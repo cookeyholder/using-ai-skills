@@ -576,10 +576,10 @@ gh pr create \
 
 ## 自動追蹤（強制）
 
-PR 建立成功後，立即執行 review-pr-3x：
+PR 建立成功後，立即執行 review-pr-2x：
 ```bash
 PR_NUMBER="$(gh pr view --json number --jq .number)"
-review-pr-3x "${PR_NUMBER}"
+review-pr-2x "${PR_NUMBER}"
 ```
 
 ## 輸出回報
@@ -587,7 +587,7 @@ review-pr-3x "${PR_NUMBER}"
 回報以下資訊：
 1. PR 標題與連結
 2. PR message 重點摘要
-3. review-pr-3x 三輪結果（新評論、CI 狀態、新增提交）
+3. review-pr-2x 兩輪結果（新評論、CI 狀態、新增提交）
 4. 仍待處理事項（若有）
 
 Return: PR URL, review status summary, any remaining items
@@ -600,7 +600,7 @@ After completion, report to user:
 - PR URL and title
 - Summary of all changes made
 - Security, performance, and spec-compliance audit results
-- `review-pr-3x` tracking results
+- `review-pr-2x` tracking results
 - Any remaining items or follow-ups
 
 ## Quick Reference

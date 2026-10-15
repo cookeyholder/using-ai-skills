@@ -1,11 +1,11 @@
 ---
 name: open-pr
-description: 發起 GitHub Pull Request 並以臺灣繁體中文撰寫完整 PR 訊息。Use when 需要從目前分支建立 PR、整理變更重點與測試結果、避免中國用語，並在 PR 建立後自動用 review-pr-3x 追蹤最新審查與 CI 狀態。
+description: 發起 GitHub Pull Request 並以臺灣繁體中文撰寫完整 PR 訊息。Use when 需要從目前分支建立 PR、整理變更重點與測試結果、避免中國用語，並在 PR 建立後自動用 review-pr-2x 追蹤最新審查與 CI 狀態。
 ---
 
 # Open PR
 
-使用 `gh` 從目前分支發起 PR，產出詳細且可審閱的 PR message（臺灣繁體），並在發起後自動執行 `review-pr-3x` 持續追蹤。
+使用 `gh` 從目前分支發起 PR，產出詳細且可審閱的 PR message（臺灣繁體），並在發起後自動執行 `review-pr-2x` 持續追蹤。
 
 在使用任何指令前，先 `cd` 到專案根目錄。
 
@@ -100,20 +100,20 @@ echo "PR: ${PR_URL}"
 PR 建立成功後，立即執行：
 
 ```bash
-review-pr-3x "${PR_NUMBER}"
+review-pr-2x "${PR_NUMBER}"
 ```
 
 若執行環境不支援直接呼叫 skill 指令，改用明確委派方式：
-- 在同一回合明確接續執行 `$review-pr-3x`。
+- 在同一回合明確接續執行 `$review-pr-2x`。
 - 帶入剛建立的 PR 編號。
-- 回報三輪追蹤的最新審查狀態與 CI 結果。
+- 回報兩輪追蹤的最新審查狀態與 CI 結果。
 
 ## 輸出回報格式
 
 完成後回報以下資訊：
 1. PR 標題與連結。
 2. PR message 重點摘要。
-3. `review-pr-3x` 三輪結果（含是否有新評論、CI 是否通過、是否有新增提交）。
+3. `review-pr-2x` 兩輪結果（含是否有新評論、CI 是否通過、是否有新增提交）。
 4. 仍待處理事項（若有）。
 
 ## Guardrails
@@ -121,4 +121,4 @@ review-pr-3x "${PR_NUMBER}"
 - 不要改動與本 PR 無關的檔案。
 - 未完成必要測試時，不要宣稱已驗證通過。
 - 若 `gh auth status` 未登入，先中止並提示使用者先完成登入。
-- 若 `review-pr-3x` 無法執行，明確說明阻塞原因並提供下一步。
+- 若 `review-pr-2x` 無法執行，明確說明阻塞原因並提供下一步。

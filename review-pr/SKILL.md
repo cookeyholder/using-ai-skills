@@ -5,10 +5,10 @@ license: MIT
 compatibility: Requires GitHub CLI (gh).
 metadata:
   author: local
-  version: "1.3"
+  version: "1.4"
 ---
 
-Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run `review-fix` validation, then commit and push updates.
+Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run lightweight `review-fix` validation, then commit and push updates.
 
 **Input**: Optional PR number or URL (e.g., `review-pr 19`).
 If omitted, infer from current branch. If ambiguous, show candidate PRs and ask user to choose.
@@ -38,11 +38,13 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
 2. **Collect review feedback**
    ```bash
    gh pr view <pr> --json reviews,latestReviews,comments,files,headRefName,baseRefName,url
+   gh api "repos/{owner}/{repo}/pulls/<pr>/comments" --paginate
    ```
+   - `gh pr view --json comments` only returns general PR comments; the `gh api .../pulls/<pr>/comments` call is required to capture inline (file/line) review comments.
    Build an actionable review list:
    - Include concrete requested changes and blocking issues
+   - Include inline review comments with their file/line context (from the API call above)
    - Exclude pure summaries, non-actionable praise, and duplicate threads
-   - Keep file/line context when available
 
 3. **Monitor CI status and failures**
    ```bash
@@ -76,15 +78,15 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
    - If either command reports conflicts, stop and resolve all conflicting files first.
    - Do not run commit/push until conflict output is empty.
 
-6. **Run `review-fix` before commit/push (mandatory)**
-   - After coding fixes are done, run one `review-fix` pass on the updated workspace.
-   - If `review-fix` finds additional issues, implement the required follow-up fixes first.
-   - Repeat until there are no unresolved actionable findings from this validation pass.
+6. **Run lightweight `review-fix` validation before commit/push (mandatory)**
+   - After coding fixes are done, run the `review-fix` skill in its **lightweight validation mode** (see `review-fix` 附錄 B): it reviews only the PR's changed files and runs affected tests/lint.
+   - Do NOT trigger the full review-fix pipeline here: no branch creation, no OpenSpec change, no full P0-P3 report, no doc consolidation, no PR prompt.
+   - If it reports actionable findings, implement the required follow-up fixes and repeat until none remain.
    - Do not commit or push before this step is complete.
 
 7. **Commit, push, and re-verify PR**
    ```bash
-   git add -u
+   git add -A
    git commit -m "<clear message for the fixes>"
    git push
    ```
@@ -100,7 +102,7 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
    - Which review items were fixed
    - Which CI failures were fixed
    - Conflict-file check result
-   - `review-fix` validation result and any extra issues it caught
+   - Lightweight `review-fix` validation result and any extra issues it caught
    - Commits added
    - Current checks/review state
    - Remaining blockers (if any)
@@ -111,4 +113,4 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
 - If there are no actionable review comments, still check CI and fix CI failures if present.
 - If review is clean and CI is green, explicitly state no action is needed.
 - Conflict-file checks are required before every commit/push in this workflow.
-- `review-fix` validation is required before every commit/push in this workflow.
+- Lightweight `review-fix` validation (changed-files review + affected tests/lint) is required before every commit/push in this workflow.

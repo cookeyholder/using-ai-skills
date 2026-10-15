@@ -128,7 +128,7 @@ openspec/changes/<project>-refactor/
     - 每次修改程式碼後，都要執行 `ruff` 和 `djLint` 工具檢查程式碼品質並排版
     - 採用高頻提交策略，每完成一個 task 就提交一次，不要累積太多變更再提交
     - 使用 `open-pr` skill 開啟 PR
-    - 使用 `review-pr-3x` skill 監控 PR，沒有發現新的審查意見或檔案衝突後，才使用 `squash-pr` skill 合併 PR
+    - 使用 `review-pr-2x` skill 監控 PR，沒有發現新的審查意見或檔案衝突後，才使用 `squash-pr` skill 合併 PR
 
 ---
 
@@ -662,7 +662,7 @@ def test_email_service_retries_on_smtp_error(user_factory):
 [2] 測試：pytest — 確認綠燈
 [3] git commit（臺灣繁體中文 Conventional Commit）
 [4] git push → open-pr（建立 PR 並產生臺灣繁體中文說明）
-[5] review-pr-3x（等待 CI + review bot）
+[5] review-pr-2x（等待 CI + review bot）
 [6] 解決 review 留言 → push
 [7] gh pr merge --squash
 [8] git checkout main && git pull
@@ -673,7 +673,7 @@ def test_email_service_retries_on_smtp_error(user_factory):
 
 ## 全部子提案完成後：收尾彙整 PR（必做）
 
-即使每個子提案都跑過 `review-pr-3x`，仍可能有**延遲出現**的審查意見。
+即使每個子提案都跑過 `review-pr-2x`，仍可能有**延遲出現**的審查意見。
 因此在「所有子提案都已 squash merge」後，必須再開一個收尾 PR，集中補齊漏掉的改善項。
 
 ```
@@ -682,7 +682,7 @@ def test_email_service_retries_on_smtp_error(user_factory):
 [C] 建立「未落地審查意見清單」：意見來源 PR、連結、風險、預計修法
 [D] 實作所有漏網改善（可含測試補強、型別修正、命名/邊界一致性調整）
 [E] git push → open-pr（建立「收尾彙整改善 PR」）
-[F] review-pr-3x（再監看一次，確保收尾 PR 自身也乾淨）
+[F] review-pr-2x（再監看一次，確保收尾 PR 自身也乾淨）
 [G] gh pr merge --squash
 [H] git checkout main && git pull
 [I] openspec-archive-change（最後才歸檔父提案）
@@ -761,6 +761,6 @@ addopts = """
 - `openspec-ff-change` — 快速建立父提案 + 子提案
 - `openspec-apply-change` — 逐步實作各個子提案的 tasks
 - `open-pr` — 建立 GitHub Pull Request，並用臺灣繁體中文整理變更重點與測試結果
-- `review-pr-3x` — 三輪等待 CI + 處理 review 留言
+- `review-pr-2x` — 兩輪等待 CI + 處理 review 留言
 - `squash-pr` — squash merge 並更新本地 main
 - `openspec-archive-change` — 完成後歸檔 change
