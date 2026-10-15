@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires GitHub CLI (gh).
 metadata:
   author: local
-  version: "1.8"
+  version: "1.9"
 ---
 
 Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run lightweight `review-fix` validation, then commit and push updates.
@@ -34,11 +34,11 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
      gh pr view <pr> --json state --jq .state
      ```
      If state is not `OPEN`, stop and report.
-   - **Normalize to a numeric PR number and explicit repository** for later REST/GraphQL calls (`pull_number` must be an integer, and `{owner}`/`{repo}` would otherwise resolve to the current directory's repository even when the input URL belongs to a different one):
+   - **Normalize to explicit repository, number, and host** for later REST/GraphQL calls (`pull_number` must be an integer, and `{owner}`/`{repo}` would otherwise resolve to the current directory's repository even when the input URL belongs to a different one):
      ```bash
-     gh pr view <pr> --json number,url --jq '{number, owner_repo: (.url | capture("github\\.com/(?<owner>[^/]+)/(?<repo>[^/]+)/pull/") | "\(.owner)/\(.repo)")}'
+     gh pr view <pr> --json url --jq '.url | capture("^https?://(?<host>[^/]+)/(?<owner>[^/]+)/(?<repo>[^/]+)/pull/(?<number>[0-9]+)$")'
      ```
-     Use `<pr_number>` and `<owner_repo>` (split into `<owner>`/`<repo>` for GraphQL `-F` variables) in all `gh api` calls below. `gh pr`/`gh run` commands still accept the original input.
+     Use `<owner>/<repo>` as `<owner_repo>` and the captured `number` as `<pr_number>` in all `gh api` calls below; for GitHub Enterprise hosts other than `github.com`, add `--hostname <host>` to each `gh api` call. `gh pr`/`gh run` commands still accept the original input.
 
 2. **Collect review feedback**
    ```bash
