@@ -3,7 +3,7 @@ name: review-fix
 description: 全方位進行專案程式碼審查，產生詳細且清楚的審查報告，並根據報告自動建立 OpenSpec change 的所有提案文件，用來規劃並修復所有發現的問題。另支援供 review-pr 等流程呼叫的輕量驗證模式。
 license: MIT
 metadata:
-    version: "2.1"
+    version: "2.2"
     # disable-model-invocation: true is intentionally omitted because
     # other skills (review-pr, refactor-django, etc.) may trigger this
     # skill via description matching when users request code reviews.
@@ -133,7 +133,7 @@ metadata:
 
 3. **自動二次審查：** 當一輪的修復任務完成後，必須**自動**重跑階段一、二，對修復後的程式碼進行嚴格的二次審查。
 
-4. **建立新一輪提案：** 若發現新的問題、未完全修復的舊問題，或是不符合 Clean Code 與效能標準的實作，則產生新的審查報告，並自動建立下一輪的 OpenSpec change 修復任務（如 `fixes-iteration-2`），然後回到第 1 步繼續自動實作。
+4. **進入下一輪：** 若發現新的問題、未完全修復的舊問題，或是不符合 Clean Code 與效能標準的實作，則產生新的審查報告，並自動建立下一輪的 OpenSpec change 修復任務（如 `fixes-iteration-2`），然後回到第 1 步繼續自動實作。若本輪審查乾淨但尚未滿足「連續 2 輪無新增 P0/P1」的成功條件，則不建立新 change，直接重複本階段的審查與測試步驟，直到成功條件滿足或達到 3 輪上限。
 
 5. **對應與擴充測試 (Update & Add Tests)：** 由於新程式碼或架構的加入，原本的測試程式碼可能無法直接對接或覆蓋率不足。**必須**調整現有測試或新增測試程式，確保所有測試皆與最新的程式碼行為一致。
 
@@ -193,7 +193,7 @@ Worker 模板：
 
 **執行範圍：**
 
-1. 只審查本次改動範圍，且**必須涵蓋尚未提交的變更**（例如並用 `git diff <base>...HEAD --name-only` 與 `git diff HEAD --name-only`），聚焦：正確性、安全性、測試覆蓋，以及是否夾帶與本次範圍無關的改動。
+1. 只審查本次改動範圍，且**必須涵蓋尚未提交的變更與未追蹤檔案**（例如並用 `git diff <base>...HEAD --name-only`、`git diff HEAD --name-only` 與 `git ls-files --others --exclude-standard` 列出），聚焦：正確性、安全性、測試覆蓋，以及是否夾帶與本次範圍無關的改動。
 2. 執行受影響範圍的測試與 lint（測試指令的發現順序同階段三第 6 點）。
 3. 輸出可執行的 findings 清單（含檔案:行號、嚴重度、建議修法）。
 4. 若發現問題，修正後重跑本模式，直到沒有未解決的 actionable findings。

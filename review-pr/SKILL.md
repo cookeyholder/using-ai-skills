@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires GitHub CLI (gh).
 metadata:
   author: local
-  version: "1.5"
+  version: "1.6"
 ---
 
 Review a Pull Request, collect actionable review feedback, monitor CI/check status with `gh pr checks --watch`, implement fixes, run lightweight `review-fix` validation, then commit and push updates.
@@ -44,12 +44,18 @@ If omitted, infer from current branch. If ambiguous, show candidate PRs and ask 
    ```bash
    gh pr view <pr> --json reviews,latestReviews,comments,files,headRefName,baseRefName,url
    gh api "repos/{owner}/{repo}/pulls/<pr_number>/comments" --paginate
+   gh api graphql -F owner="{owner}" -F repo="{repo}" -F pr=<pr_number> -f query='
+     query($owner:String!,$repo:String!,$pr:Int!) {
+       repository(owner:$owner,name:$repo){ pullRequest(number:$pr){
+         reviewThreads(first:100){ nodes { isResolved isOutdated
+           comments(first:1){ nodes { path line body } } } } } }
+     }' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved==false and .isOutdated==false)'
    ```
-   - `gh pr view --json comments` only returns general PR comments; the `gh api .../pulls/<pr_number>/comments` call is required to capture inline (file/line) review comments.
+   - `gh pr view --json comments` only returns general PR comments; the `gh api .../pulls/<pr_number>/comments` call captures inline (file/line) comments, but the REST endpoint does not expose thread resolution state — use the GraphQL `reviewThreads` query to exclude resolved/outdated threads before creating work items.
    Build an actionable review list:
    - Include concrete requested changes and blocking issues
-   - Include inline review comments with their file/line context (from the API call above)
-   - Exclude pure summaries, non-actionable praise, and duplicate threads
+   - Include inline review comments with their file/line context (from the calls above)
+   - Exclude pure summaries, non-actionable praise, resolved/outdated threads, and duplicates
 
 3. **Monitor CI status and failures**
    ```bash
