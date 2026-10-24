@@ -1,6 +1,12 @@
 ---
 name: feature-dev
-description: Use when adding a new feature to a project with full end-to-end automation — from codebase exploration through OpenSpec proposal, review, implementation with git worktrees, security/performance/spec-compliance audit, and PR creation. Triggers: "add a feature", "implement new feature", "feature pipeline", "build feature end-to-end", or any request for orchestrated feature development.
+description: >-
+  Use when adding a new feature to a project with full end-to-end automation —
+  from codebase exploration through OpenSpec proposal, review, implementation
+  with git worktrees, security/performance/spec-compliance audit, and PR
+  creation. Triggers: "add a feature", "implement new feature", "feature
+  pipeline", "build feature end-to-end", or any request for orchestrated feature
+  development.
 ---
 
 # Feature Dev
