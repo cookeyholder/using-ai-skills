@@ -13,6 +13,13 @@ Run `review-pr` twice, with one 5-minute interval between the two rounds to catc
 **Input**: Optional PR number or URL (e.g., `review-pr-2x 19`).
 If omitted, infer from current branch using the same rule as `review-pr`.
 
+## When NOT to Use
+
+- When one pass is enough or the PR has no delayed review surface — use `review-pr` instead of waiting five minutes.
+- When you need to open a PR — use `open-pr`, which hands off to this skill automatically.
+- When the PR is already approved — use `squash-pr`; no need for another review round.
+- When you cannot keep the session open across the interval — run two manual `review-pr` passes instead.
+
 ## Execution Plan
 
 1. Resolve target PR (same logic as `review-pr`).

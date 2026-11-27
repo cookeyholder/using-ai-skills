@@ -10,6 +10,14 @@ metadata:
 
 Use this skill when the user wants to finalize a PR by squashing into the PR's target branch after confirming there are no new review comments, then sync the local target branch.
 
+## 不適用情境（When NOT to Use）
+
+- PR 仍有未處理的審查意見或 CI 未通過——先用 `review-pr` 修到乾淨。
+- 想保留逐步提交歷史——用一般 merge，不要 squash。
+- 尚未決定如何收尾——用 `finishing-a-development-branch` 比較 merge／PR／cleanup 選項。
+- 目標分支受保護或沒有推送權限——先確認權限，本技能會改動遠端分支。
+- 現在分支就是目標分支——沒有可合併的 PR。
+
 ## Input
 - Optional PR number/URL (e.g., `17` or full PR URL)
 - If omitted, infer from current branch with `gh pr view`

@@ -13,6 +13,13 @@ Guide completion of development work by presenting clear options and handling ch
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
+## When NOT to Use
+
+- Tests are still failing or implementation is incomplete — fix them first; this skill only presents integration options.
+- The PR is already open and approved — use `squash-pr` to merge and sync the local branch.
+- You need to track incoming review feedback — use `review-pr` or `review-pr-2x`.
+- You are mid-implementation and simply need the next task — use `incremental-implementation`.
+
 ## The Process
 
 ### Step 1: Verify Tests

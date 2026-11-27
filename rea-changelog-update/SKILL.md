@@ -10,6 +10,13 @@ Use this for release-note preparation and contributor attribution. Read
 publication authority and the existing checkpoint checks. This skill prepares
 notes; it does not authorize merging, tagging, or publishing.
 
+## When NOT to Use
+
+- When you need to create or merge a PR — use `open-pr` or `squash-pr`; this skill never authorizes a merge.
+- When the release notes are for a project other than REA — the pinned-history and Release Please workflow here does not apply.
+- When you need to design or change a REA investigation tool — use `rea-tool-design`.
+- When publication authority is unclear — stop and read `docs/development/releasing.md` before preparing notes.
+
 ## Inventory before prose
 
 Fetch complete history and tags. Select the published baseline tag from

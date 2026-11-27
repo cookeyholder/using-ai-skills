@@ -13,6 +13,14 @@ Review a Pull Request, collect actionable review feedback, monitor CI/check stat
 **Input**: Optional PR number or URL (e.g., `review-pr 19`).
 If omitted, infer from current branch. If ambiguous, show candidate PRs and ask user to choose.
 
+## When NOT to Use
+
+- When you need to open a new PR — use `open-pr`.
+- When you want the two-round delayed-feedback cycle — use `review-pr-2x`, which runs this skill twice.
+- When the PR is already approved and you only want to merge — use `squash-pr`.
+- When there are no review comments or CI checks to act on — there is nothing for this skill to do.
+- When the goal is a general code review rather than PR feedback — use `code-review-and-quality`.
+
 ## Pre-checks
 
 1. **Auth check**: Verify GitHub CLI is authenticated
