@@ -19,6 +19,13 @@ This skill acts as your personal organization assistant, helping you maintain a 
 - **AI agents have created scattered report files across your project root** (散落的 agent 報告文件)
 - You need to consolidate useful information from temporary reports
 
+## When NOT to Use
+
+- When the files belong to a live project with a defined structure — use `git-workflow-and-versioning` or the project's own conventions instead of reorganizing ad hoc.
+- When you need a one-off handoff document, not file cleanup — use `handoff`.
+- When the task is to write or migrate documentation — use `documentation-and-adrs`; moving files alone does not fix content.
+- When deletion is irreversible and ownership is unclear — confirm with the user before touching anything; this skill proposes structure, it does not authorize data loss.
+
 ## What This Skill Does
 
 1. **Analyzes Current Structure**: Reviews your folders and files to understand what you have

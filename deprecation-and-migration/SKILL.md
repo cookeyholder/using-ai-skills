@@ -20,6 +20,13 @@ Most engineering organizations are good at building things. Few are good at remo
 - Planning the lifecycle of a new system (deprecation planning starts at design time)
 - Deciding whether to maintain a legacy system or invest in migration
 
+## When NOT to Use
+
+- When the goal is to design a new public interface — use `api-and-interface-design`; deprecation planning belongs in that design, not in a removal session.
+- When code is new and has no users to migrate — don't schedule a deprecation cycle for something never shipped.
+- When the change is a straightforward bug fix or refactor with no compatibility impact — use `diagnosing-bugs` or `code-simplification`.
+- When the decision to retire a system is not authorized — this skill plans migrations, it does not grant authority to delete production systems.
+
 ## Core Principles
 
 ### Code Is a Liability

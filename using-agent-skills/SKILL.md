@@ -35,7 +35,10 @@ Task arrives
     │   └── PR approved, ready to merge? ──→ squash-pr
     ├── CI/CD pipeline work? ──────────→ ci-cd-and-automation
     ├── Writing docs/ADRs? ───────────→ documentation-and-adrs
-    └── Deploying/launching? ─────────→ shipping-and-launch
+    ├── Deploying/launching? ─────────→ shipping-and-launch
+    ├── Handoff for another session? ──→ handoff
+    │   └── Start immediately in background? → claude-handoff
+    └── Organizing files/folders? ─────→ file-organizer
 ```
 
 ## Core Operating Behaviors
@@ -175,3 +178,6 @@ Not every task needs every skill. A bug fix might only need: `diagnosing-bugs` �
 | Ship | ci-cd-and-automation | Automated quality gates on every change |
 | Ship | documentation-and-adrs | Document the why, not just the what |
 | Ship | shipping-and-launch | Pre-launch checklist, monitoring, rollback plan |
+| Ship | handoff | Save a handoff document for the next session |
+| Ship | claude-handoff | Seed a background agent with the handoff immediately |
+| Ship | file-organizer | Clean up files and folders, find duplicates |
