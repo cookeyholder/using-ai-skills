@@ -9,6 +9,13 @@ description: 發起 GitHub Pull Request 並以臺灣繁體中文撰寫完整 PR 
 
 在使用任何指令前，先 `cd` 到專案根目錄。
 
+## 不適用情境（When NOT to Use）
+
+- 目前分支是 `main`、`master` 或沒有可提交的變更——先建立分支或完成變更。
+- 只是想追蹤既有 PR 的審查意見——用 `review-pr`；想跑兩輪追蹤用 `review-pr-2x`。
+- 想直接合併已通過的 PR——用 `squash-pr`，不要重開一個 PR。
+- 遠端不是 GitHub 或 `gh` 未驗證——先處理遠端設定，本技能依賴 `gh`。
+
 ## 前置檢查
 
 1. 確認目前在 Git 儲存庫且 `gh` 可用。

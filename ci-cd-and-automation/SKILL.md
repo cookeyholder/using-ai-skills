@@ -13,6 +13,12 @@ Automate quality gates so that no change reaches production without passing test
 
 **Faster is Safer:** Smaller batches and more frequent releases reduce risk, not increase it. A deployment with 3 changes is easier to debug than one with 30. Frequent releases build confidence in the release process itself.
 
+### Choosing among the delivery skills
+
+- **`ci-cd-and-automation`** (this skill): set up and debug the **quality gate pipeline** — tests, lint, type checking, build, and CI feedback to agents.
+- **`senior-devops`**: infrastructure layer — IaC, containers, cloud platforms, and monitoring through generator scripts.
+- **`shipping-and-launch`**: the **release event** — pre-launch checklist, staged rollout, and rollback plan.
+
 ## When to Use
 
 - Setting up a new project's CI pipeline
@@ -20,6 +26,13 @@ Automate quality gates so that no change reaches production without passing test
 - Configuring deployment pipelines
 - When a change should trigger automated verification
 - Debugging CI failures
+
+## When NOT to Use
+
+- When you are about to ship a specific release — use `shipping-and-launch` for the checklist and rollback plan.
+- When the work is Terraform, containers, cloud accounts, or monitoring configuration — use `senior-devops`.
+- When a pipeline already exists and passes — don't rebuild it; run the relevant verification skill instead.
+- When you need to merge a PR — use `squash-pr`, not a CI change.
 
 ## The Quality Gate Pipeline
 

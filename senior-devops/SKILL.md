@@ -7,6 +7,19 @@ description: Comprehensive DevOps skill for CI/CD, infrastructure automation, co
 
 Complete toolkit for senior devops with modern tools and best practices.
 
+### Choosing among the delivery skills
+
+- **`senior-devops`** (this skill): the infrastructure layer — Terraform scaffolding, container setup, cloud providers (AWS/GCP/Azure), and monitoring, driven by generator scripts.
+- **`ci-cd-and-automation`**: the **quality gate pipeline** — tests, lint, type checking, build, and CI failure feedback.
+- **`shipping-and-launch`**: the **release event** — pre-launch checklist, staged rollout, and rollback plan.
+
+## When NOT to Use
+
+- When you only need to add a test or lint step to an existing pipeline — use `ci-cd-and-automation`.
+- When you are shipping a specific release rather than building infrastructure — use `shipping-and-launch`.
+- When the requested platform is outside AWS/GCP/Azure — the bundled generators do not apply.
+- When there is no infrastructure change to make — do not scaffold Terraform or pipeline files just because the topic came up.
+
 ## Quick Start
 
 ### Main Capabilities

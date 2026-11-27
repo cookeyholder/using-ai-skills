@@ -9,6 +9,12 @@ description: Prepares production launches. Use when preparing to deploy to produ
 
 Ship with confidence. The goal is not just to deploy — it's to deploy safely, with monitoring in place, a rollback plan ready, and a clear understanding of what success looks like. Every launch should be reversible, observable, and incremental.
 
+### Choosing among the delivery skills
+
+- **`shipping-and-launch`** (this skill): the **release event** — pre-launch checklist, staged rollout, monitoring, and rollback plan.
+- **`ci-cd-and-automation`**: the **quality gate pipeline** that must pass before a release is eligible.
+- **`senior-devops`**: the **infrastructure layer** — IaC, containers, cloud providers, and monitoring setup.
+
 ## When to Use
 
 - Deploying a feature to production for the first time
@@ -16,6 +22,13 @@ Ship with confidence. The goal is not just to deploy — it's to deploy safely, 
 - Migrating data or infrastructure
 - Opening a beta or early access program
 - Any deployment that carries risk (all of them)
+
+## When NOT to Use
+
+- When you are still building the pipeline — use `ci-cd-and-automation`.
+- When the task is to provision infrastructure or configure cloud accounts — use `senior-devops`.
+- When the PR is not yet approved — use `review-pr` and then `squash-pr`; no release until the merge is clean.
+- When nothing is actually being deployed — a checklist without a release target is noise.
 
 ## The Pre-Launch Checklist
 

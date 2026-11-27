@@ -32,6 +32,7 @@ Task arrives
     │   ├── Ready to request review? ─→ requesting-code-review
     │   └── Received feedback? ───────→ receiving-code-review
     ├── Committing/branching? ─────────→ git-workflow-and-versioning
+    │   └── PR approved, ready to merge? ──→ squash-pr
     ├── CI/CD pipeline work? ──────────→ ci-cd-and-automation
     ├── Writing docs/ADRs? ───────────→ documentation-and-adrs
     └── Deploying/launching? ─────────→ shipping-and-launch
@@ -170,6 +171,7 @@ Not every task needs every skill. A bug fix might only need: `diagnosing-bugs` �
 | Review | requesting-code-review | Hand off work with crafted reviewer context |
 | Review | receiving-code-review | Verify feedback technically before implementing |
 | Ship | git-workflow-and-versioning | Atomic commits, clean history |
+| Ship | squash-pr | Squash merge after review clears, then sync local branch |
 | Ship | ci-cd-and-automation | Automated quality gates on every change |
 | Ship | documentation-and-adrs | Document the why, not just the what |
 | Ship | shipping-and-launch | Pre-launch checklist, monitoring, rollback plan |
