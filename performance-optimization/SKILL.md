@@ -17,7 +17,12 @@ Measure before optimizing. Performance work without measurement is guessing — 
 - You suspect a change introduced a regression
 - Building features that handle large datasets or high traffic
 
-**When NOT to use:** Don't optimize before you have evidence of a problem. Premature optimization adds complexity that costs more than the performance it gains.
+## When NOT to Use
+
+- Don't optimize before you have evidence of a problem — premature optimization adds complexity that costs more than the performance it gains.
+- When there is no measurement or profiling data — use `diagnosing-bugs` to build a feedback loop first.
+- When the work is a correctness bug rather than a speed issue — fix correctness before tuning performance.
+- When the bottleneck is infrastructure capacity or cloud configuration — use `senior-devops` instead of rewriting application code.
 
 ## Core Web Vitals Targets
 

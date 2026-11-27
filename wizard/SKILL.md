@@ -11,6 +11,13 @@ The delightful UX is already solved by [template.sh](template.sh): stage-by-stag
 
 A wizard is ephemeral by default: built for one run, saved to a scratch or `scripts/` path, deleted when the job's done. Commit it only when the user wants a repeatable setup path that should live in the repo.
 
+## When NOT to Use
+
+- When the agent can perform the steps itself — the wizard exists only for steps that require a human (credentials, dashboards, one-off cutovers).
+- When the task is adding a test or a CI check to an existing pipeline — use `tdd` or `ci-cd-and-automation`.
+- When you need a durable handoff document rather than an interactive script — use `handoff`.
+- When nobody will run the script — do not author a wizard just because the setup looks tedious.
+
 ## Process
 
 ### 1. Scope the procedure
