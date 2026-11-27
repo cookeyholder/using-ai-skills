@@ -18,6 +18,13 @@ Security-first development practices for web applications. Treat every external 
 - Adding file uploads, webhooks, or callbacks
 - Handling payment or PII data
 
+## When NOT to Use
+
+- When you need to discover vulnerabilities rather than fix them — run `owasp-security-review` first.
+- When the change has no untrusted input, secrets, or external integrations.
+- When a general pre-merge quality gate is enough — use `code-review-and-quality`.
+- When a language-specific first-pass screen is enough — use `code-reviewer`.
+
 ## The Three-Tier Boundary System
 
 ### Always Do (No Exceptions)
@@ -313,6 +320,9 @@ git diff --cached | grep -i "password\|secret\|api_key\|token"
 - [ ] Error messages don't expose internals
 ```
 ## See Also
+
+- Run `owasp-security-review` first when the task is to find vulnerabilities; this skill implements the fixes.
+- `code-reviewer` includes a first-pass security screen — treat it as a triage signal, not an audit.
 
 For detailed security checklists and pre-commit verification steps, see `references/security-checklist.md`.
 

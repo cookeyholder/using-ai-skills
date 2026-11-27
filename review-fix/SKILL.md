@@ -16,6 +16,14 @@ metadata:
 - **完整模式（預設）**：前置作業 → 階段一（全面審查）→ 階段二（建立 OpenSpec 提案）→ 階段三（迭代修復循環）→ 階段四（收尾與回報）。
 - **輕量驗證模式**：由 `review-pr`、`review-pr-2x` 等流程於 commit/push 前呼叫，或使用者明確要求「只驗證、不走完整流程」時採用；僅審查改動範圍並執行測試驗證，不切分支、不建立 OpenSpec change、不產出完整報告、不整併文件、不詢問發 PR。規範見「附錄 B」。
 
+## 不適用情境（When NOT to Use）
+
+- 小型或單行修改：直接套用 `code-review-and-quality` 的品質閘即可，不必建立 OpenSpec change。
+- 只想確認變更是否符合規格：用 `code-review` 指定 fixed point 比對 Standards／Spec。
+- 只想找安全漏洞：用 `owasp-security-review`；本 skill 的完整模式會建立修復提案，範圍更大。
+- 只是收到審查意見要驗證：用 `receiving-code-review`，不要重新跑一輪全面審查。
+- 被 `review-pr` 於 commit/push 前呼叫時只走輕量模式；不要切分支或建立 OpenSpec change。
+
 ## 前置作業
 
 1. **建立修復分支：** 在任何實作開始前，先從目前分支切出專用修復分支（例如 `review-fix/<change-name>`），名稱需可追溯本輪 review-fix change。

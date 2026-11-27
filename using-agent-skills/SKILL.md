@@ -28,7 +28,9 @@ Task arrives
     ├── Something broke? ──────────────→ diagnosing-bugs
     ├── Reviewing code? ───────────────→ code-review-and-quality
     │   ├── Security concerns? ───────→ security-and-hardening
-    │   └── Performance concerns? ────→ performance-optimization
+    │   ├── Performance concerns? ────→ performance-optimization
+    │   ├── Ready to request review? ─→ requesting-code-review
+    │   └── Received feedback? ───────→ receiving-code-review
     ├── Committing/branching? ─────────→ git-workflow-and-versioning
     ├── CI/CD pipeline work? ──────────→ ci-cd-and-automation
     ├── Writing docs/ADRs? ───────────→ documentation-and-adrs
@@ -165,6 +167,8 @@ Not every task needs every skill. A bug fix might only need: `diagnosing-bugs` �
 | Review | code-review-and-quality | Five-axis review with quality gates |
 | Review | security-and-hardening | OWASP prevention, input validation, least privilege |
 | Review | performance-optimization | Measure first, optimize only what matters |
+| Review | requesting-code-review | Hand off work with crafted reviewer context |
+| Review | receiving-code-review | Verify feedback technically before implementing |
 | Ship | git-workflow-and-versioning | Atomic commits, clean history |
 | Ship | ci-cd-and-automation | Automated quality gates on every change |
 | Ship | documentation-and-adrs | Document the why, not just the what |

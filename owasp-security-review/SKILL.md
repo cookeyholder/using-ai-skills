@@ -24,6 +24,13 @@ Systematic security code review covering three OWASP standards:
 | A10: Mishandling of Exceptional Conditions | New -- error handling, failing open, resource leaks |
 | SSRF | Moved from A10 (2021) into A01: Broken Access Control |
 
+## When NOT to Use
+
+- Trivial changes with no security surface (docs, typo fixes, private config edits).
+- When you only need a general pre-merge quality gate — the Security axis of `code-review-and-quality` is enough.
+- When you only need a language-specific first-pass screen — use `code-reviewer`.
+- When the goal is to implement fixes rather than find them — this skill stops at findings; use `security-and-hardening` for the fixes.
+
 ## Decision Tree: Which Lists to Apply
 
 Project being reviewed:
@@ -122,3 +129,4 @@ Prioritized list of fixes
 - Recommend automated security scanning in CI/CD
 - Flag systemic patterns (e.g., every endpoint missing auth = middleware refactor)
 - For LLM projects: recommend red-teaming / adversarial testing
+- Hand the findings to `security-and-hardening` for the implementation pass; this skill stops at reporting and prioritization.

@@ -7,6 +7,20 @@ description: Comprehensive code review skill for TypeScript, JavaScript, Python,
 
 Complete toolkit for code reviewer with modern tools and best practices.
 
+### Choosing among the review skills
+
+- **`code-reviewer`** (this skill): language-specific automated analysis for TypeScript, JavaScript, Python, Swift, Kotlin, and Go. Its security check is a **first-pass screen**, not a full audit.
+- **`code-review`**: compare a branch or diff against a fixed point on Standards and Spec.
+- **`code-review-and-quality`** (default router choice): five-axis quality gate before merge.
+- For a full audit, follow up with `owasp-security-review`, then harden with `security-and-hardening`.
+
+## When NOT to Use
+
+- When you need to verify a diff matches its originating spec — use `code-review`.
+- When you need a general pre-merge quality gate — use `code-review-and-quality`.
+- When the project's language is outside the six supported ones — the bundled scripts do not apply.
+- When a security audit is the goal — the built-in scan is only a screen; use `owasp-security-review`.
+
 ## Quick Start
 
 ### Main Capabilities
@@ -158,6 +172,9 @@ Follow the patterns and practices documented in:
 - Monitor in production
 
 ### Security
+
+This is a first-pass screen. For a full audit, use `owasp-security-review`, then fix findings with `security-and-hardening`.
+
 - Validate all inputs
 - Use parameterized queries
 - Implement proper authentication

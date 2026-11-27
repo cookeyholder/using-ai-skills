@@ -11,6 +11,13 @@ Code review requires technical evaluation, not emotional performance.
 
 **Core principle:** Verify before implementing. Ask before assuming. Technical correctness over social comfort.
 
+## When NOT to Use
+
+- Before feedback arrives — `requesting-code-review` covers how to hand off work for review.
+- When the feedback is clearly actionable and low-risk — implement and test it directly; no response pattern needed.
+- When the review is a security audit report — use `security-and-hardening` for the fixes, then re-run `owasp-security-review`.
+- When the goal is to produce a review rather than receive one — see `code-review`, `code-review-and-quality`, or `code-reviewer`.
+
 ## The Response Pattern
 
 ```

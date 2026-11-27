@@ -11,6 +11,14 @@ Multi-dimensional code review with quality gates. Every change gets reviewed bef
 
 **The approval standard:** Approve a change when it definitely improves overall code health, even if it isn't perfect. Perfect code doesn't exist — the goal is continuous improvement. Don't block a change because it isn't exactly how you would have written it. If it improves the codebase and follows the project's conventions, approve it.
 
+### Choosing among the review skills
+
+- **`code-review-and-quality`** (this skill, default router choice): five-axis quality gate before merge.
+- **`code-review`**: compare a branch or diff against a fixed point on Standards and Spec. Use when origin fidelity matters.
+- **`code-reviewer`**: language-specific automated analysis with a first-pass security scan.
+
+For a full security audit, use `owasp-security-review`; this skill's Security axis is a quality gate, not an audit.
+
 ## When to Use
 
 - Before merging any PR or change
@@ -18,6 +26,13 @@ Multi-dimensional code review with quality gates. Every change gets reviewed bef
 - When another agent or model produced code you need to evaluate
 - When refactoring existing code
 - After any bug fix (review both the fix and the regression test)
+
+## When NOT to Use
+
+- Single-line fixes or self-evident changes that need no quality gate.
+- When you need to verify a branch matches its originating spec — use `code-review` with the fixed point.
+- When you need a language-specific static-analysis sweep — use `code-reviewer`.
+- When a security audit is the goal — use `owasp-security-review` instead of the Security axis alone.
 
 ## The Five-Axis Review
 
