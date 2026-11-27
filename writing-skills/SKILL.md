@@ -282,8 +282,8 @@ wc -w skills/path/SKILL.md
 Use skill name only, with explicit requirement markers:
 - ✅ Good: `**REQUIRED SUB-SKILL:** Use tdd`
 - ✅ Good: `**REQUIRED BACKGROUND:** You MUST understand diagnosing-bugs`
-- ❌ Bad: `See skills/testing/test-driven-development` (unclear if required)
-- ❌ Bad: `@skills/testing/test-driven-development/SKILL.md` (force-loads, burns context)
+- ❌ Bad: `See skills/testing/example-skill` (unclear if required)
+- ❌ Bad: `@skills/testing/example-skill/SKILL.md` (force-loads, burns context)
 
 **Why no @ links:** `@` syntax force-loads files immediately, consuming 200k+ context before you need them.
 
