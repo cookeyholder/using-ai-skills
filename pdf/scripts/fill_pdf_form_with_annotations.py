@@ -78,6 +78,8 @@ def fill_pdf_form(input_pdf_path, fields_json_path, output_pdf_path):
         font_size = str(entry_text.get("font_size", 14)) + "pt"
         font_color = entry_text.get("font_color", "000000")
 
+        # Font size/color seems to not work reliably across viewers:
+        # https://github.com/py-pdf/pypdf/issues/2084
         annotation = FreeText(
             text=text,
             rect=transformed_entry_box,

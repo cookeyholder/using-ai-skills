@@ -278,6 +278,19 @@ This checks for:
 
 Fix any reported errors in fields.json before proceeding.
 
+### Generate validation images and inspect them manually (REQUIRED)
+
+Generate a validation image for each page:
+
+`python scripts/create_validation_image.py <page_number> fields.json <input_image_path> <output_image_path>`
+
+Red rectangles mark entry areas; blue rectangles cover label text. **Do not proceed until you have visually inspected every validation image:**
+
+- Red rectangles must ONLY cover input areas and MUST NOT contain any label text
+- Blue rectangles should contain the label text
+- For checkboxes, the red rectangle must be centered on the checkbox square, and the blue rectangle should cover its text label
+- If any rectangle looks wrong, fix fields.json, regenerate the validation images, and repeat until every box is accurate
+
 ## Step 3: Fill the Form
 
 The fill script auto-detects the coordinate system and handles conversion:
