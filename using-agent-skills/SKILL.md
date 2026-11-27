@@ -23,9 +23,9 @@ Task arrives
     │   ├── UI work? ─────────────────→ design-taste-frontend
     │   ├── API work? ────────────────→ api-and-interface-design
     │   └── Need better context? ─────→ context-engineering
-    ├── Writing/running tests? ────────→ test-driven-development
-    │   └── Browser-based? ───────────→ browser-testing-with-devtools
-    ├── Something broke? ──────────────→ debugging-and-error-recovery
+    ├── Writing/running tests? ────────→ tdd
+    │   └── Browser-based? ───────────→ agent-browser
+    ├── Something broke? ──────────────→ diagnosing-bugs
     ├── Reviewing code? ───────────────→ code-review-and-quality
     │   ├── Security concerns? ───────→ security-and-hardening
     │   └── Performance concerns? ────→ performance-optimization
@@ -125,7 +125,7 @@ These are the subtle errors that look like productivity but create problems:
 
 2. **Skills are workflows, not suggestions.** Follow the steps in order. Don't skip verification steps.
 
-3. **Multiple skills can apply.** A feature implementation might involve `idea-refine` → `spec-driven-development` → `planning-and-task-breakdown` → `incremental-implementation` → `test-driven-development` → `code-review-and-quality` → `shipping-and-launch` in sequence.
+3. **Multiple skills can apply.** A feature implementation might involve `idea-refine` → `spec-driven-development` → `planning-and-task-breakdown` → `incremental-implementation` → `tdd` → `code-review-and-quality` → `shipping-and-launch` in sequence.
 
 4. **When in doubt, start with a spec.** If the task is non-trivial and there's no spec, begin with `spec-driven-development`.
 
@@ -139,14 +139,14 @@ For a complete feature, the typical skill sequence is:
 3. planning-and-task-breakdown → Break into verifiable chunks
 4. context-engineering         → Load the right context
 5. incremental-implementation  → Build slice by slice
-6. test-driven-development     → Prove each slice works
+6. tdd                         → Prove each slice works
 7. code-review-and-quality     → Review before merge
 8. git-workflow-and-versioning → Clean commit history
 9. documentation-and-adrs      → Document decisions
 10. shipping-and-launch        → Deploy safely
 ```
 
-Not every task needs every skill. A bug fix might only need: `debugging-and-error-recovery` → `test-driven-development` → `code-review-and-quality`.
+Not every task needs every skill. A bug fix might only need: `diagnosing-bugs` → `tdd` → `code-review-and-quality`.
 
 ## Quick Reference
 
@@ -159,9 +159,9 @@ Not every task needs every skill. A bug fix might only need: `debugging-and-erro
 | Build | context-engineering | Right context at the right time |
 | Build | design-taste-frontend | Anti-slop UI with browser-based quality gate |
 | Build | api-and-interface-design | Stable interfaces with clear contracts |
-| Verify | test-driven-development | Failing test first, then make it pass |
-| Verify | browser-testing-with-devtools | Chrome DevTools MCP for runtime verification |
-| Verify | debugging-and-error-recovery | Reproduce → localize → fix → guard |
+| Verify | tdd | Failing test first, then make it pass |
+| Verify | agent-browser | Browser automation for runtime verification |
+| Verify | diagnosing-bugs | Build a feedback loop → diagnose → fix → guard |
 | Review | code-review-and-quality | Five-axis review with quality gates |
 | Review | security-and-hardening | OWASP prevention, input validation, least privilege |
 | Review | performance-optimization | Measure first, optimize only what matters |
