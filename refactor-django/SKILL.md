@@ -26,7 +26,7 @@ metadata:
 ## 整體流程概覽
 
 ```
-[1] 分析現況        → 覆蓋率報告 + 使用 `django-snapshot` 和 `code-reviewer` skill 了解專案現況與識別 Fat View/Model
+[1] 分析現況        → 覆蓋率報告 + 使用 `code-reviewer` skill 與直接盤點了解專案現況與識別 Fat View/Model
 [2] 規劃提案        → 使用 openspec-ff-change skill（父提案 + 子提案）
 [3] Wave 1 安全網   → 純新增測試，不動任何業務邏輯
 [4] Wave 2 Service  → 有安全網後，才搬移 View/Model 邏輯
@@ -56,8 +56,8 @@ pytest --cov=src --cov-report=html --cov-omit="*/migrations/*,manage.py"
 | models.py 方法數 | > 15 個    | Fat Model 候選，評估邊界           |
 
 
-### 1.2 使用 `django-snapshot` 和 `code-reviewer` skill 了解專案現況與識別 Fat View/Model
-    - 使用 `django-snapshot` 產生專案快照，了解有多少 view function、model method、signal、import 關係等
+### 1.2 使用 `code-reviewer` skill 與直接盤點了解專案現況與識別 Fat View/Model
+    - 直接盤點專案結構，了解有多少 view function、model method、signal、import 關係等（可用 AST／grep 靜態分析）
     - 使用 `code-reviewer` skill 掃瞄專案程式碼 3 輪
       - 第一輪：識別 Fat View/Model 拆解後的 Service 層
       - 第二輪：識別出不夠 clean 的程式碼，以及不容易維護的程式碼
@@ -117,7 +117,7 @@ openspec/changes/<project>-refactor/
 ### child 提案結構
     - 每個 child 提案命名規則：`refactor-wave{N}-{NN}-{slug}`
     - 每個 child 提案的 `tasks.md` 應該包含：
-      - 使用 `django-snapshot` skill 產生的快照
+      - 盤點得到的專案結構快照（view／model／signal／import 清單）
       - 實作完的程式碼要用一個 sub-agent 利用 `code-reviewer` 和 `review-fix` skill 以最嚴格的標準掃描，確保沒有引入新的問題或者解決所有發現的問題
       - 更新專案文件，包括 `README.md`、`docs/` 等
 
@@ -755,7 +755,6 @@ addopts = """
 
 ## 相關 Skills
 
-- `django-snapshot` — 掃描覆蓋率與 Fat View
 - `code-reviewer` — 程式碼審查工具，提供改進建議
 - `review-fix` — 全方位程式碼審查 + 自動建立 OpenSpec 提案
 - `openspec-ff-change` — 快速建立父提案 + 子提案
