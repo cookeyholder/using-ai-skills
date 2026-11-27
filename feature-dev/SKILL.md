@@ -24,7 +24,7 @@ Orchestrate the complete feature development lifecycle using specialized subagen
 - Need structured OpenSpec-based workflow with security/performance gates
 
 **When NOT to use:**
-- Bug fixes (use `systematic-debugging` or `diagnosing-bugs`)
+- Bug fixes (use `diagnosing-bugs`)
 - Quick small changes (do it directly)
 - Refactoring without new functionality (use `code-simplification`)
 
