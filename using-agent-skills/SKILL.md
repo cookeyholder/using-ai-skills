@@ -20,7 +20,7 @@ Task arrives
     ├── New project/feature/change? ──→ spec-driven-development
     ├── Have a spec, need tasks? ──────→ planning-and-task-breakdown
     ├── Implementing code? ────────────→ incremental-implementation
-    │   ├── UI work? ─────────────────→ frontend-ui-engineering
+    │   ├── UI work? ─────────────────→ design-taste-frontend
     │   ├── API work? ────────────────→ api-and-interface-design
     │   └── Need better context? ─────→ context-engineering
     ├── Writing/running tests? ────────→ test-driven-development
@@ -157,7 +157,7 @@ Not every task needs every skill. A bug fix might only need: `debugging-and-erro
 | Plan | planning-and-task-breakdown | Decompose into small, verifiable tasks |
 | Build | incremental-implementation | Thin vertical slices, test each before expanding |
 | Build | context-engineering | Right context at the right time |
-| Build | frontend-ui-engineering | Production-quality UI with accessibility |
+| Build | design-taste-frontend | Anti-slop UI with browser-based quality gate |
 | Build | api-and-interface-design | Stable interfaces with clear contracts |
 | Verify | test-driven-development | Failing test first, then make it pass |
 | Verify | browser-testing-with-devtools | Chrome DevTools MCP for runtime verification |
