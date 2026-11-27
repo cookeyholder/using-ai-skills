@@ -2,6 +2,8 @@
 
 Advanced table extraction strategies for production environments.
 
+> **Consolidated reference.** Originally a separate `pdf-processing-pro` skill. Paths below are relative to the `pdf/` skill root. Only `scripts/analyze_form.py` is bundled; other scripts mentioned in older examples are not shipped. Use the inline snippets instead.
+
 ## Table of contents
 
 - Basic table extraction
@@ -30,10 +32,21 @@ with pdfplumber.open("report.pdf") as pdf:
             print(row)
 ```
 
-### Using included script
+### Exporting extracted tables
 
-```bash
-python scripts/extract_tables.py report.pdf --output tables.csv
+No `extract_tables.py` is bundled. Combine the pdfplumber snippet above with Python's `csv` module:
+
+```python
+import csv
+import pdfplumber
+
+with pdfplumber.open("report.pdf") as pdf:
+    tables = pdf.pages[0].extract_tables()
+
+with open("tables.csv", "w", newline="") as f:
+    writer = csv.writer(f)
+    for table in tables:
+        writer.writerows(table)
 ```
 
 Output:

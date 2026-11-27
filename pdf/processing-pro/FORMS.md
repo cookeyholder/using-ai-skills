@@ -2,6 +2,8 @@
 
 Complete guide for processing PDF forms in production environments.
 
+> **Consolidated reference.** Originally a separate `pdf-processing-pro` skill. Paths below are relative to the `pdf/` skill root. Only `scripts/analyze_form.py` is bundled; `validate_form.py`, `fill_form.py`, and `flatten_form.py` in older examples are not shipped. For actual filling, follow `pdf/forms.md`; for flattening, use the inline snippet in this file.
+
 ## Table of contents
 
 - Form analysis and field detection
@@ -100,14 +102,15 @@ cat > data.json << EOF
 }
 EOF
 
-# 3. Validate data
-python scripts/validate_form.py data.json schema.json
+# 3. Validate data.json against schema.json yourself
+#    (no validate_form.py is bundled)
 
-# 4. Fill form
-python scripts/fill_form.py template.pdf data.json filled.pdf
+# 4. Fill the form by following pdf/forms.md
+#    (no fill_form.py is bundled; use scripts/fill_fillable_fields.py
+#    or scripts/fill_pdf_form_with_annotations.py)
 
-# 5. Flatten (optional - makes fields non-editable)
-python scripts/flatten_form.py filled.pdf final.pdf
+# 5. Flatten with the inline snippet under "Flattening forms" below
+#    (no flatten_form.py is bundled)
 ```
 
 ### Programmatic filling
@@ -387,11 +390,7 @@ with open("flattened.pdf", "wb") as output:
     writer.write(output)
 ```
 
-### Using included script
-
-```bash
-python scripts/flatten_form.py filled.pdf flattened.pdf
-```
+No `flatten_form.py` is bundled. Use the inline snippet above or the `writer.flatten_fields()` approach in `pdf/reference.md`.
 
 ## Error handling patterns
 

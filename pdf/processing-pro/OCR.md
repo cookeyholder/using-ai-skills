@@ -2,6 +2,8 @@
 
 Extract text from scanned PDFs and image-based documents.
 
+> **Consolidated reference.** Originally a separate `pdf-processing-pro` skill. Paths below are relative to the `pdf/` skill root. Only `scripts/analyze_form.py` is bundled; other scripts mentioned in older examples are not shipped.
+
 ## Quick start
 
 ```python
@@ -99,7 +101,7 @@ text = pytesseract.image_to_string(processed)
 3. **Batch process** large documents
 4. **Cache results** to avoid re-processing
 5. **Validate output** - OCR is not 100% accurate
-6. **Consider confidence scores** for quality checks
+6. **Manually spot-check output** — no confidence-score implementation is bundled
 
 ## Production example
 
