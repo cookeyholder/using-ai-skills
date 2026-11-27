@@ -10,6 +10,19 @@ Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
 
 Both axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings.
 
+### Choosing among the review skills
+
+- **`code-review`** (this skill): compare `HEAD` against a fixed point on Standards and Spec. Use when you need to know whether a branch or diff matches its origin.
+- **`code-review-and-quality`** (default router choice): five-axis scorecard with quality gates, used before merge without comparing against a specific origin.
+- **`code-reviewer`**: language-specific automated analysis for TypeScript, JavaScript, Python, Swift, Kotlin, and Go, including a first-pass security scan.
+
+## When NOT to Use
+
+- Single-line fixes, typo corrections, or self-evident changes — review the diff directly instead.
+- When you only need a pre-merge quality gate — use `code-review-and-quality`.
+- When you need language-specific static analysis — use `code-reviewer`.
+- When the change is security-sensitive and needs a full audit — follow this review with `owasp-security-review`.
+
 The issue tracker should have been provided to you. If `docs/agents/issue-tracker.md` is missing, tell the user to run `/setup-matt-pocock-skills`.
 
 ## Process

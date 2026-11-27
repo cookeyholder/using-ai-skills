@@ -21,6 +21,13 @@ Dispatch superpowers:code-reviewer subagent to catch issues before they cascade.
 - Before refactoring (baseline check)
 - After fixing complex bug
 
+## When NOT to Use
+
+- Trivial changes (typo, single-line fix, config reorder) — review the diff directly.
+- When the same diff already returned actionable feedback — address it first; see `receiving-code-review`.
+- When you cannot supply the relevant files and requirement context — a reviewer without context produces noise.
+- When you only need a security audit — use `owasp-security-review`; this skill dispatches the general-purpose `code-reviewer` subagent.
+
 ## How to Request
 
 **1. Get git SHAs:**
