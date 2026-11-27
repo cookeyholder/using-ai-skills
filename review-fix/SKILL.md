@@ -5,7 +5,7 @@ license: MIT
 metadata:
     version: "2.4"
     # disable-model-invocation: true is intentionally omitted because
-    # other skills (review-pr, refactor-django, etc.) may trigger this
+    # other skills (review-pr, etc.) may trigger this
     # skill via description matching when users request code reviews.
 ---
 
